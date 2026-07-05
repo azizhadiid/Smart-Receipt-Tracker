@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'layouts/main_layout.dart'; // Memanggil komponen layout utama
+import 'pages/auth/login_page.dart'; // Panggil file login
 
 void main() {
   runApp(const SmartReceiptApp());
@@ -15,10 +15,10 @@ class SmartReceiptApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        useMaterial3: true, // Menggunakan desain UI modern
+        useMaterial3: true,
       ),
-      // Memanggil MainLayout layaknya master.blade.php
-      home: const MainLayout(),
+      // Awal aplikasi diarahkan ke Halaman Login
+      home: const LoginPage(),
     );
   }
 }
