@@ -14,12 +14,12 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
-  // Array berisi komponen halaman yang akan dipanggil
-  final List<Widget> _pages = const [
-    HomePage(),
-    HistoryPage(),
-    ScanPage(),
-    ProfilePage(),
+  // Hapus 'const' di sini agar halaman bisa menerima data dinamis ke depannya
+  final List<Widget> _pages = [
+    const HomePage(),
+    const HistoryPage(),
+    const ScanPage(),
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,9 +31,8 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], // Menampilkan halaman sesuai index
+      body: _pages[_selectedIndex], // Mengganti halaman di tengah layar
       bottomNavigationBar: NavigationBar(
-        // Menggunakan NavigationBar Material 3
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
         destinations: const [
