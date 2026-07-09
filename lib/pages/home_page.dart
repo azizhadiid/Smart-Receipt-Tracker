@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:smart_receipt/pages/history_page.dart';
+import 'package:smart_receipt/pages/notifications_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,7 +19,15 @@ class HomePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            onPressed: () {
+              // Navigasi ke halaman Notifikasi (Navigation Bar akan otomatis tertutup)
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationsPage(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -114,7 +124,13 @@ class HomePage extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Nanti diarahkan ke tab History
+                    // Navigasi ke Halaman History (sebagai sub-halaman, tanpa Navigation Bar)
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const HistoryPage(),
+                      ),
+                    );
                   },
                   child: const Text('Lihat Semua'),
                 ),
