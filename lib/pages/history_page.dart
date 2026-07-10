@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_receipt/pages/transaction_detail_page.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
@@ -138,16 +139,30 @@ class HistoryPage extends StatelessWidget {
                       trx['date'] as String,
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
-                    trailing: Text(
-                      '- ${trx['amount']}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.redAccent,
-                      ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '- ${trx['amount']}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right, color: Colors.grey),
+                      ],
                     ),
+
                     onTap: () {
-                      // Nanti bisa diarahkan ke halaman detail struk yang menampilkan foto asli struknya
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              TransactionDetailPage(transactionData: trx),
+                        ),
+                      );
                     },
                   ),
                 );
