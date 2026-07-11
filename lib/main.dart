@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
-import 'pages/auth/login_page.dart'; // Panggil file login
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'pages/auth/login_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Load file .env terlebih dahulu sebelum memanggil Supabase
+  await dotenv.load(fileName: ".env");
+
+  // 3. Inisialisasi Supabase menggunakan variabel rahasia
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    publishableKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  );
+
   runApp(const SmartReceiptApp());
 }
 
