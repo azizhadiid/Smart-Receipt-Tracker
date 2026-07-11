@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_receipt/pages/history_page.dart';
-import 'package:smart_receipt/pages/notifications_page.dart';
+import 'package:smart_receipt/pages/home/notifications_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smart_receipt/pages/transaction_detail_page.dart';
+import 'package:smart_receipt/pages/history/transaction_detail_page.dart';
 
 class HistoryPage extends StatelessWidget {
   const HistoryPage({super.key});
