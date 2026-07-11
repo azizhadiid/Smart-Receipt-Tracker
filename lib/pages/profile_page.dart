@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
-import 'auth/login_page.dart'; // Untuk fungsi logout
+import 'auth/login_page.dart';
+
+// Import halaman sub-profil yang baru dibuat
+import 'profile/budget_settings_page.dart';
+import 'profile/export_data_page.dart';
+import 'profile/security_settings_page.dart';
+import 'profile/help_support_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -83,23 +89,50 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+
+                  // Navigasi ke Batas Budget
                   _buildProfileMenu(
                     icon: Icons.account_balance_wallet_outlined,
                     title: 'Batas Budget Bulanan',
                     subtitle: 'Atur batas pengeluaran maksimum',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BudgetSettingsPage(),
+                        ),
+                      );
+                    },
                   ),
+
+                  // Navigasi ke Ekspor Data
                   _buildProfileMenu(
                     icon: Icons.download_outlined,
                     title: 'Ekspor Data (Excel/PDF)',
                     subtitle: 'Unduh laporan keuangan',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExportDataPage(),
+                        ),
+                      );
+                    },
                   ),
+
+                  // Navigasi ke Keamanan Akun
                   _buildProfileMenu(
                     icon: Icons.security_outlined,
                     title: 'Keamanan Akun',
                     subtitle: 'Ubah password atau PIN',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SecuritySettingsPage(),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
 
@@ -112,10 +145,19 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+
+                  // Navigasi ke Bantuan & Dukungan
                   _buildProfileMenu(
                     icon: Icons.help_outline,
                     title: 'Bantuan & Dukungan',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpSupportPage(),
+                        ),
+                      );
+                    },
                   ),
 
                   // Tombol Logout
@@ -136,8 +178,6 @@ class ProfilePage extends StatelessWidget {
                       ),
                     ),
                     onTap: () {
-                      // Fungsi Logout melempar pengguna kembali ke LoginPage
-                      // dan menghapus semua riwayat tumpukan halaman
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
