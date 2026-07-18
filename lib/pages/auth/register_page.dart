@@ -75,21 +75,52 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      await Supabase.instance.client.auth.signUp(
+      // Simpan balasan dari Supabase ke dalam variabel 'response'
+      final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
         data: {'full_name': name},
+
+        emailRedirectTo: 'smartreceipt://login-callback',
       );
 
       if (mounted) {
-        showCustomAlert(
-          context: context,
-          title: 'Registrasi Berhasil!',
-          message:
-              'Akun Anda telah dibuat. Silakan kembali ke halaman untuk melakukan Login.',
-          isError: false,
-        );
-        Future.delayed(const Duration(seconds: 2), () {
+        // Cek apakah email sudah pernah didaftarkan (identities kosong)
+        if (response.user != null &&
+            response.user!.identities != null &&
+            response.user!.identities!.isEmpty) {
+          showCustomAlert(
+            context: context,
+            title: 'Email Sudah Digunakan',
+            message:
+                'Email ini telah terdaftar. Silakan gunakan email lain atau masuk (login).',
+            isError: true,
+          );
+          return; // Hentikan proses
+        }
+
+        // --- LOGIKA BARU VERIFIKASI EMAIL ---
+        // Jika session null, berarti Supabase sedang menunggu user klik link di email
+        if (response.session == null) {
+          showCustomAlert(
+            context: context,
+            title: 'Cek Inbox Email Anda!',
+            message:
+                'Tautan verifikasi telah dikirim ke $email. Silakan klik tautan tersebut untuk mengaktifkan akun sebelum Anda bisa Login.',
+            isError: false,
+          );
+        } else {
+          // Jaga-jaga jika sewaktu-waktu kamu mematikan fitur verifikasi email di dashboard
+          showCustomAlert(
+            context: context,
+            title: 'Registrasi Berhasil!',
+            message: 'Akun Anda telah dibuat. Silakan masuk (login).',
+            isError: false,
+          );
+        }
+
+        // Kembali ke halaman Login setelah 4 detik agar user sempat membaca pesan
+        Future.delayed(const Duration(seconds: 4), () {
           if (mounted) Navigator.pop(context);
         });
       }
@@ -161,7 +192,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 40),
 
-            // Pemanggilan Komponen CustomTextField
             CustomTextField(
               controller: _nameController,
               labelText: 'Nama Lengkap',
