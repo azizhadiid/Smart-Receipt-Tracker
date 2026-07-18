@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:smart_receipt/pages/auth/reset_password_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../layouts/main_layout.dart';
 import '../../components/custom_alert.dart'; // Import Custom Alert
@@ -20,6 +23,27 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  late final StreamSubscription<AuthState> _authSubscription; // Detektor
+
+  @override
+  void initState() {
+    super.initState();
+    // Memasang pendengar (listener) perubahan status autentikasi dari Deep Link Supabase
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
+      final AuthChangeEvent event = data.event;
+
+      // Jika event-nya adalah "Password Recovery", arahkan user ke ResetPasswordPage
+      if (event == AuthChangeEvent.passwordRecovery) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
+        );
+      }
+    });
+  }
+
   // --- LOGIKA LOGIN & VALIDASI ---
   Future<void> _signIn() async {
     final email = _emailController.text.trim();
@@ -37,7 +61,9 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     // 2. Validasi Format Email
-    final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    final emailRegex = RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+    );
     if (!emailRegex.hasMatch(email)) {
       showCustomAlert(
         context: context,
@@ -96,6 +122,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _authSubscription.cancel(); // Matikan pendengar saat halaman dihancurkan
     super.dispose();
   }
 
@@ -116,7 +143,11 @@ class _LoginPageState extends State<LoginPage> {
                 const Text(
                   'Selamat Datang',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.teal),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -134,15 +165,21 @@ class _LoginPageState extends State<LoginPage> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: 16),
-                
+
                 CustomTextField(
                   controller: _passwordController,
                   labelText: 'Password',
                   prefixIcon: Icons.lock_outline,
                   obscureText: _obscurePassword,
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
 
@@ -153,11 +190,16 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordPage(),
+                        ),
                       );
                     },
                     style: TextButton.styleFrom(foregroundColor: Colors.teal),
-                    child: const Text('Lupa Password?', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text(
+                      'Lupa Password?',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -169,23 +211,40 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Colors.teal,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     disabledBackgroundColor: Colors.teal.shade200,
                   ),
                   child: _isLoading
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Masuk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Masuk',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
                 const SizedBox(height: 20),
 
                 // Login with Google (Placeholder)
                 OutlinedButton.icon(
-                  onPressed: () {}, 
+                  onPressed: () {},
                   icon: const Icon(Icons.g_mobiledata, size: 30),
                   label: const Text('Masuk dengan Google'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -194,15 +253,26 @@ class _LoginPageState extends State<LoginPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Belum punya akun?', style: TextStyle(color: Colors.grey.shade600)),
+                    Text(
+                      'Belum punya akun?',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterPage()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterPage(),
+                          ),
                         );
                       },
-                      child: const Text('Daftar Sekarang', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal)),
+                      child: const Text(
+                        'Daftar Sekarang',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
                     ),
                   ],
                 ),
