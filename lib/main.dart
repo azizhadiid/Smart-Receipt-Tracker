@@ -7,7 +7,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 2. Load file .env terlebih dahulu sebelum memanggil Supabase
-  await dotenv.load(fileName: ".env");
+   await dotenv.load(fileName: ".env");
 
   // 3. Inisialisasi Supabase menggunakan variabel rahasia
   await Supabase.initialize(
