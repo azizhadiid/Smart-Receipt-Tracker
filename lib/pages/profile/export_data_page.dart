@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show Uint8List;
+import 'package:flutter/foundation.dart' show kIsWeb, Uint8List;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:file_saver/file_saver.dart';
@@ -45,9 +45,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
       if (user == null) throw Exception('Sesi pengguna tidak valid.');
 
       // 1. Menentukan rentang tanggal berdasarkan bulan & tahun yang dipilih
-      // Tanggal awal: Hari ke-1 bulan tersebut
       final startDate = DateTime(_selectedYear, _selectedMonth, 1);
-      // Tanggal akhir: Hari ke-0 bulan depannya (sama dengan hari terakhir bulan ini)
       final endDate = DateTime(_selectedYear, _selectedMonth + 1, 0);
 
       // 2. Fetch data dari Supabase dengan filter tanggal
@@ -70,7 +68,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
             isError: true,
           );
         }
-        return; // Hentikan proses jika data kosong
+        return;
       }
 
       // 4. Hitung Analisis Singkat
@@ -80,19 +78,22 @@ class _ExportDataPageState extends State<ExportDataPage> {
       }
       int totalTransactions = data.length;
 
-      // 5. Eksekusi pembuatan file sesuai format
       final fileName =
           'Laporan_Pengeluaran_${_monthNames[_selectedMonth - 1]}_$_selectedYear';
 
+      // Variabel untuk menangkap lokasi file
+      String savedLocation = "";
+
+      // 5. Eksekusi pembuatan file dan tangkap lokasinya
       if (format == 'pdf') {
-        await _generateAndSavePDF(
+        savedLocation = await _generateAndSavePDF(
           data,
           totalAmount,
           totalTransactions,
           fileName,
         );
       } else if (format == 'excel') {
-        await _generateAndSaveExcel(
+        savedLocation = await _generateAndSaveExcel(
           data,
           totalAmount,
           totalTransactions,
@@ -100,13 +101,16 @@ class _ExportDataPageState extends State<ExportDataPage> {
         );
       }
 
-      // 6. Tampilkan Notifikasi Sukses
+      // 6. Tampilkan Notifikasi Sukses beserta Lokasinya
       if (mounted) {
+        String pesanSukses = kIsWeb
+            ? 'Laporan $format berhasil diunduh ke komputer Anda.'
+            : 'Laporan berhasil disimpan di folder Downloads:\n\n$savedLocation';
+
         showCustomAlert(
           context: context,
           title: 'Berhasil Mengunduh!',
-          message:
-              'Laporan $format untuk bulan ${_monthNames[_selectedMonth - 1]} telah disimpan.',
+          message: pesanSukses,
           isError: false,
         );
       }
@@ -125,7 +129,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
   }
 
   // --- LOGIKA PEMBUATAN PDF ---
-  Future<void> _generateAndSavePDF(
+  Future<String> _generateAndSavePDF(
     List<dynamic> data,
     double totalAmount,
     int totalTransactions,
@@ -153,7 +157,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
               ),
               pw.SizedBox(height: 20),
 
-              // Bagian Analisis
               pw.Container(
                 padding: const pw.EdgeInsets.all(10),
                 decoration: pw.BoxDecoration(
@@ -178,7 +181,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
               ),
               pw.SizedBox(height: 20),
 
-              // Tabel Transaksi
               pw.TableHelper.fromTextArray(
                 headers: ['Tanggal', 'Deskripsi', 'Nominal (Rp)'],
                 headerStyle: pw.TextStyle(
@@ -211,15 +213,18 @@ class _ExportDataPageState extends State<ExportDataPage> {
     );
 
     final Uint8List pdfBytes = await pdf.save();
-    await FileSaver.instance.saveFile(
+
+    final String? savedPath = await FileSaver.instance.saveAs(
       name: '$fileName.pdf',
       bytes: pdfBytes,
       mimeType: MimeType.pdf,
     );
+
+    return savedPath ?? "Penyimpanan dibatalkan";
   }
 
   // --- LOGIKA PEMBUATAN EXCEL ---
-  Future<void> _generateAndSaveExcel(
+  Future<String> _generateAndSaveExcel(
     List<dynamic> data,
     double totalAmount,
     int totalTransactions,
@@ -229,7 +234,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
     Sheet sheetObject = excel['Laporan Bulanan'];
     excel.setDefaultSheet('Laporan Bulanan');
 
-    // Header Analisis
     sheetObject.appendRow([
       TextCellValue('Periode:'),
       TextCellValue('${_monthNames[_selectedMonth - 1]} $_selectedYear'),
@@ -242,16 +246,14 @@ class _ExportDataPageState extends State<ExportDataPage> {
       TextCellValue('Total Pengeluaran:'),
       DoubleCellValue(totalAmount),
     ]);
-    sheetObject.appendRow([TextCellValue('')]); // Baris Kosong
+    sheetObject.appendRow([TextCellValue('')]);
 
-    // Header Tabel
     sheetObject.appendRow([
       TextCellValue('Tanggal'),
       TextCellValue('Deskripsi Transaksi'),
       TextCellValue('Nominal (Rp)'),
     ]);
 
-    // Isi Data
     for (var item in data) {
       sheetObject.appendRow([
         TextCellValue(item['transaction_date'].toString()),
@@ -263,11 +265,13 @@ class _ExportDataPageState extends State<ExportDataPage> {
     final List<int>? excelBytes = excel.save();
     if (excelBytes == null) throw Exception('Gagal merender file Excel.');
 
-    await FileSaver.instance.saveFile(
+    final String? savedPath = await FileSaver.instance.saveAs(
       name: '$fileName.xlsx',
       bytes: Uint8List.fromList(excelBytes),
       mimeType: MimeType.microsoftExcel,
     );
+
+    return savedPath ?? "Penyimpanan dibatalkan";
   }
 
   @override
@@ -304,7 +308,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
             const SizedBox(height: 10),
             Row(
               children: [
-                // Dropdown Bulan
                 Expanded(
                   flex: 2,
                   child: Container(
@@ -334,7 +337,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 ),
                 const SizedBox(width: 16),
 
-                // Dropdown Tahun
                 Expanded(
                   flex: 1,
                   child: Container(
@@ -349,7 +351,6 @@ class _ExportDataPageState extends State<ExportDataPage> {
                         isExpanded: true,
                         value: _selectedYear,
                         items: List.generate(5, (index) {
-                          // Menampilkan tahun ini sampai 4 tahun ke belakang
                           int year = DateTime.now().year - index;
                           return DropdownMenuItem(
                             value: year,

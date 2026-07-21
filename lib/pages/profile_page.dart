@@ -190,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                         _buildProfileMenu(
                           icon: Icons.download_outlined,
-                          title: 'Ekspor Data (Excel/PDF)',
+                          title: 'Download Laporan (Excel/PDF)',
                           subtitle: 'Unduh laporan keuangan',
                           onTap: () => Navigator.push(
                             context,
