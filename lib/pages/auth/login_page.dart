@@ -138,7 +138,21 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.receipt_long, size: 80, color: Colors.teal),
+                Center(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 120, // Sesuaikan ukuran lebarnya
+                    height: 120, // Sesuaikan ukuran tingginya
+                    // Jika kamu ingin menambahkan error builder agar tidak error jika gambar gagal muat:
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.image_not_supported,
+                        size: 80,
+                        color: Colors.grey,
+                      );
+                    },
+                  ),
+                ),
                 const SizedBox(height: 20),
                 const Text(
                   'Selamat Datang',
