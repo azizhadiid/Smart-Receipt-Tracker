@@ -80,7 +80,6 @@ class _RegisterPageState extends State<RegisterPage> {
         email: email,
         password: password,
         data: {'full_name': name},
-
         emailRedirectTo: 'smartreceipt://login-callback',
       );
 
@@ -167,31 +166,66 @@ class _RegisterPageState extends State<RegisterPage> {
       appBar: AppBar(
         title: const Text(
           'Buat Akun',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // --- LOGO APLIKASI KECIL ---
+            Center(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.cyan.withOpacity(0.2),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 90,
+                  height: 90,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.image_not_supported,
+                      size: 60,
+                      color: Colors.grey,
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // --- TEKS HEADER ---
             const Text(
               'Mulai Kelola Strukmu',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.teal,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF00838F), // Cyan gelap yang elegan
+                letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Daftar sekarang untuk memantau pengeluaran dengan lebih cerdas.',
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
 
+            // --- FORM INPUT ---
             CustomTextField(
               controller: _nameController,
               labelText: 'Nama Lengkap',
@@ -221,57 +255,84 @@ class _RegisterPageState extends State<RegisterPage> {
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
 
-            ElevatedButton(
-              onPressed: _isLoading ? null : _signUp,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // --- TOMBOL DAFTAR ---
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF00BCD4),
+                    Color(0xFF00897B),
+                  ], // Cyan ke Teal
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-                disabledBackgroundColor: Colors.teal.shade200,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00BCD4).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _signUp,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor:
+                      Colors.transparent, // Transparan agar gradient terlihat
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Daftar Sekarang',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 1,
+                        ),
                       ),
-                    )
-                  : const Text(
-                      'Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
+
+            // --- LINK KE LOGIN ---
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Sudah punya akun?',
-                  style: TextStyle(color: Colors.grey.shade600),
+                  'Sudah punya akun? ',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
                 ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
                   child: const Text(
                     'Masuk',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.teal,
+                      color: Color(0xFF00ACC1),
+                      fontSize: 15,
                     ),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

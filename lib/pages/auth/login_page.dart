@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:smart_receipt/pages/auth/reset_password_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../layouts/main_layout.dart';
-import '../../components/custom_alert.dart'; // Import Custom Alert
-import '../../components/custom_text_field.dart'; // Import Custom Text Field
+import '../../components/custom_alert.dart';
+import '../../components/custom_text_field.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
 
@@ -23,18 +23,16 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  late final StreamSubscription<AuthState> _authSubscription; // Detektor
+  late final StreamSubscription<AuthState> _authSubscription;
 
   @override
   void initState() {
     super.initState();
-    // Memasang pendengar (listener) perubahan status autentikasi dari Deep Link Supabase
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
     ) {
       final AuthChangeEvent event = data.event;
 
-      // Jika event-nya adalah "Password Recovery", arahkan user ke ResetPasswordPage
       if (event == AuthChangeEvent.passwordRecovery) {
         Navigator.push(
           context,
@@ -49,7 +47,6 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // 1. Validasi Kolom Kosong
     if (email.isEmpty || password.isEmpty) {
       showCustomAlert(
         context: context,
@@ -60,7 +57,6 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // 2. Validasi Format Email
     final emailRegex = RegExp(
       r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
     );
@@ -77,13 +73,11 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Memanggil fungsi signInWithPassword dari Supabase
       await Supabase.instance.client.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
-      // Jika berhasil, langsung arahkan ke Dashboard (MainLayout)
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -91,7 +85,6 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } on AuthException catch (e) {
-      // Menangani error dari Supabase (misal: password salah atau email tidak ada)
       if (mounted) {
         String errorMessage = 'Terjadi kesalahan saat login.';
         if (e.message.toLowerCase().contains('invalid login credentials')) {
@@ -122,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _authSubscription.cancel(); // Matikan pendengar saat halaman dihancurkan
+    _authSubscription.cancel();
     super.dispose();
   }
 
@@ -133,45 +126,63 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 28.0,
+              vertical: 24.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // --- LOGO APLIKASI DENGAN EFEK BAYANGAN ---
                 Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    width: 120, // Sesuaikan ukuran lebarnya
-                    height: 120, // Sesuaikan ukuran tingginya
-                    // Jika kamu ingin menambahkan error builder agar tidak error jika gambar gagal muat:
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.image_not_supported,
-                        size: 80,
-                        color: Colors.grey,
-                      );
-                    },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.cyan.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Image.asset(
+                      'assets/images/logo.png', // Sesuai dengan gambar logo baru
+                      width: 140,
+                      height: 140,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.image_not_supported,
+                          size: 80,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
+
+                // --- TEKS SELAMAT DATANG ---
                 const Text(
                   'Selamat Datang',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF00838F), // Cyan gelap agar elegan
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Masuk untuk melanjutkan ke Smart Receipt',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 40),
 
-                // Menggunakan CustomTextField (Atomic Design)
+                // --- FORM INPUT ---
                 CustomTextField(
                   controller: _emailController,
                   labelText: 'Email',
@@ -197,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                // Lupa Password Link
+                // --- LUPA PASSWORD ---
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -209,70 +220,149 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       );
                     },
-                    style: TextButton.styleFrom(foregroundColor: Colors.teal),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF00ACC1), // Cyan accent
+                      padding: EdgeInsets.zero,
+                    ),
                     child: const Text(
                       'Lupa Password?',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-                // Tombol Login dengan efek Loading
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _signIn,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // --- TOMBOL LOGIN UTAMA ---
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF00BCD4),
+                        Color(0xFF00897B),
+                      ], // Cyan ke Teal
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
                     ),
-                    disabledBackgroundColor: Colors.teal.shade200,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF00BCD4).withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _signIn,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: Colors
+                          .transparent, // Transparan agar gradient terlihat
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'Masuk',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 1,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Masuk',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                // Login with Google (Placeholder)
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.g_mobiledata, size: 30),
-                  label: const Text('Masuk dengan Google'),
+                // --- GARIS PEMISAH ---
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'ATAU',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // --- TOMBOL LOGIN GOOGLE ---
+                OutlinedButton(
+                  onPressed: () {
+                    // Logika login Google nantinya di sini
+                  },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: Colors.white,
+                    side: BorderSide(color: Colors.grey.shade300, width: 1.5),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Menggunakan icon Google dari URL untuk tampilan nyata
+                      Image.network(
+                        'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                        height: 24,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.g_mobiledata,
+                              color: Colors.blue,
+                              size: 30,
+                            ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Masuk dengan Google',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 32),
 
-                // Link ke Register
+                // --- LINK REGISTER ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Belum punya akun?',
-                      style: TextStyle(color: Colors.grey.shade600),
+                      'Belum punya akun? ',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 15,
+                      ),
                     ),
-                    TextButton(
-                      onPressed: () {
+                    GestureDetector(
+                      onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -284,12 +374,14 @@ class _LoginPageState extends State<LoginPage> {
                         'Daftar Sekarang',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.teal,
+                          color: Color(0xFF00ACC1),
+                          fontSize: 15,
                         ),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
