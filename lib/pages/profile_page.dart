@@ -7,7 +7,7 @@ import 'profile/budget_settings_page.dart';
 import 'profile/export_data_page.dart';
 import 'profile/security_settings_page.dart';
 import 'profile/help_support_page.dart';
-import 'profile/edit_profile_page.dart'; // Import halaman edit yang baru dibuat
+import 'profile/edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,7 +29,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _fetchProfileData();
   }
 
-  // Fungsi untuk membaca data dari Supabase
+  // --- LOGIKA MENGAMBIL DATA (TIDAK DIUBAH) ---
   Future<void> _fetchProfileData() async {
     setState(() => _isLoading = true);
     try {
@@ -58,100 +58,151 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[50], // Latar bersih
       appBar: AppBar(
         title: const Text(
           'Profil Saya',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F),
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF00BCD4)),
+            )
           : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(
+                bottom: 100,
+              ), // Ruang lega di bawah untuk NavBar
               child: Column(
                 children: [
                   const SizedBox(height: 20),
 
-                  // 1. Bagian Foto Profil dan Data Diri
+                  // --- 1. FOTO PROFIL & DATA DIRI ---
                   Center(
                     child: Column(
                       children: [
-                        // Logika menampilkan foto asli atau ikon default
-                        CircleAvatar(
-                          radius: 50,
-                          backgroundColor: Colors.teal.shade100,
-                          backgroundImage: _avatarUrl != null
-                              ? NetworkImage(_avatarUrl!)
-                              : null,
-                          child: _avatarUrl == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: Colors.teal,
-                                )
-                              : null,
+                        // Bingkai Gradasi + Shadow untuk Avatar
+                        Container(
+                          padding: const EdgeInsets.all(
+                            4,
+                          ), // Jarak antara foto dan bingkai
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF00BCD4), Color(0xFF00897B)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF00BCD4).withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 52,
+                            backgroundColor: Colors.white,
+                            child: CircleAvatar(
+                              radius: 48,
+                              backgroundColor: const Color(
+                                0xFFE0F7FA,
+                              ), // Light Cyan
+                              backgroundImage: _avatarUrl != null
+                                  ? NetworkImage(_avatarUrl!)
+                                  : null,
+                              child: _avatarUrl == null
+                                  ? const Icon(
+                                      Icons.person,
+                                      size: 50,
+                                      color: Color(0xFF00838F),
+                                    )
+                                  : null,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
+
                         Text(
                           _fullName,
                           style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF00838F),
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
+
                         Text(
                           _institution,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
+
+                        // Badge Role
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
+                            horizontal: 16,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.teal.shade50,
+                            color: const Color(0xFF00BCD4).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             _role,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.teal.shade700,
-                              fontWeight: FontWeight.w600,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF00838F),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
 
                         // Tombol Edit Profil
                         OutlinedButton.icon(
                           onPressed: () async {
-                            // Menunggu hasil dari halaman Edit Profile
                             final bool? isUpdated = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const EditProfilePage(),
                               ),
                             );
-                            // Jika user klik simpan, refresh data di halaman ini
                             if (isUpdated == true) {
                               _fetchProfileData();
                             }
                           },
-                          icon: const Icon(Icons.edit, size: 16),
-                          label: const Text('Edit Data Diri'),
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: const Text(
+                            'Edit Data Diri',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.teal,
-                            side: const BorderSide(color: Colors.teal),
+                            foregroundColor: const Color(0xFF00897B),
+                            side: const BorderSide(
+                              color: Color(0xFF00897B),
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                         ),
@@ -160,21 +211,22 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 40),
 
-                  // 2. Menu Pengaturan Aplikasi
+                  // --- 2. MENU PENGATURAN ---
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Pengaturan',
+                          'PENGATURAN',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
                             color: Colors.grey,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
                         _buildProfileMenu(
                           icon: Icons.account_balance_wallet_outlined,
@@ -212,17 +264,18 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 32),
 
                         const Text(
-                          'Lainnya',
+                          'LAINNYA',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
                             color: Colors.grey,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
 
                         _buildProfileMenu(
                           icon: Icons.help_outline,
@@ -235,72 +288,118 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
 
-                        // Tombol Logout
-                        ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.logout, color: Colors.red),
+                        // --- TOMBOL LOGOUT (DESAIN MERAH) ---
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.08),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
-                          title: const Text(
-                            'Keluar (Logout)',
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
                             ),
+                            leading: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                            title: const Text(
+                              'Keluar (Logout)',
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            trailing: const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            onTap: () async {
+                              await Supabase.instance.client.auth.signOut();
+                              if (context.mounted) {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                  (Route<dynamic> route) => false,
+                                );
+                              }
+                            },
                           ),
-                          onTap: () async {
-                            // Pastikan keluar dari sesi Supabase juga
-                            await Supabase.instance.client.auth.signOut();
-                            if (context.mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                                (Route<dynamic> route) => false,
-                              );
-                            }
-                          },
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
     );
   }
 
+  // --- WIDGET CUSTOM MENU (UPDATE DESAIN) ---
   Widget _buildProfileMenu({
     required IconData icon,
     required String title,
     String? subtitle,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.teal.shade50,
-            borderRadius: BorderRadius.circular(10),
+            color: const Color(0xFF00BCD4).withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: Colors.teal),
+          child: Icon(icon, color: const Color(0xFF00897B)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+            fontSize: 15,
+          ),
+        ),
         subtitle: subtitle != null
-            ? Text(subtitle, style: const TextStyle(fontSize: 12))
+            ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                ),
+              )
             : null,
         trailing: const Icon(
           Icons.arrow_forward_ios,
