@@ -18,8 +18,18 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> _recentTransactions = [];
 
   final List<String> _monthNames = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
   @override
@@ -28,7 +38,7 @@ class _HomePageState extends State<HomePage> {
     _fetchDashboardData();
   }
 
-  // --- LOGIKA MENGAMBIL DATA DASHBOARD ---
+  // --- LOGIKA MENGAMBIL DATA DASHBOARD (TIDAK DIUBAH) ---
   Future<void> _fetchDashboardData() async {
     setState(() => _isLoading = true);
     try {
@@ -68,7 +78,6 @@ class _HomePageState extends State<HomePage> {
 
       // 5. Ambil 3 Transaksi Terakhir untuk ditampilkan di daftar bawah
       _recentTransactions = transactions.take(3).toList();
-
     } catch (e) {
       debugPrint('Error fetching dashboard: $e');
     } finally {
@@ -76,7 +85,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // --- HELPER UNTUK FORMAT TAMPILAN ---
+  // --- HELPER UNTUK FORMAT TAMPILAN (TIDAK DIUBAH) ---
   String _formatRupiah(double value) {
     String strValue = value.toStringAsFixed(0);
     String formatted = '';
@@ -115,144 +124,253 @@ class _HomePageState extends State<HomePage> {
     final bool isOverBudget = remainingBudget < 0;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[50], // Background yang bersih dan modern
       appBar: AppBar(
-        title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F),
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Color(0xFF00838F)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.notifications_none,
+                color: Color(0xFF00838F),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsPage(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
       // RefreshIndicator memungkinkan user menarik layar ke bawah untuk reload data
       body: RefreshIndicator(
         onRefresh: _fetchDashboardData,
-        color: Colors.teal,
+        color: const Color(0xFF00BCD4), // Warna loader sesuai tema
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFF00BCD4)),
+              )
             : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(), // Wajib agar RefreshIndicator bekerja walau konten sedikit
-                padding: const EdgeInsets.all(20.0),
+                physics:
+                    const AlwaysScrollableScrollPhysics(), // Wajib agar RefreshIndicator bekerja
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 16.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Sapaan Pengguna
+                    // --- 1. SAPAAN PENGGUNA ---
                     Text(
                       'Halo, ${_getGreeting()}! 👋',
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       _userName, // Nama dinamis dari database
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF00838F), // Cyan gelap modern
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
 
-                    // 2. Kartu Ringkasan (Summary Card)
+                    // --- 2. KARTU RINGKASAN (SUMMARY CARD) ---
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Colors.teal, Color(0xFF004D40)],
+                          colors: [
+                            Color(0xFF00BCD4),
+                            Color(0xFF00897B),
+                          ], // Cyan ke Teal
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.teal.withOpacity(0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+                            color: const Color(0xFF00BCD4).withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Stack(
                         children: [
-                          const Text(
-                            'Total Pengeluaran (Bulan Ini)',
-                            style: TextStyle(color: Colors.white70, fontSize: 14),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _formatRupiah(_totalExpense),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
+                          // Ikon background transparan agar terlihat estetik
+                          Positioned(
+                            right: -20,
+                            top: -10,
+                            child: Icon(
+                              Icons.account_balance_wallet,
+                              size: 120,
+                              color: Colors.white.withOpacity(0.15),
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          // Konten Teks
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Batas: ${_formatRupiah(_budgetLimit)}',
-                                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              const Text(
+                                'Total Pengeluaran (Bulan Ini)',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  // Ubah warna latar menjadi merah transparan jika overbudget
-                                  color: isOverBudget ? Colors.red.withOpacity(0.8) : Colors.white24,
-                                  borderRadius: BorderRadius.circular(20),
+                              const SizedBox(height: 10),
+                              Text(
+                                _formatRupiah(_totalExpense),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
                                 ),
-                                child: Text(
-                                  isOverBudget 
-                                      ? 'Overbudget: ${_formatRupiah(remainingBudget.abs())}' 
-                                      : 'Sisa: ${_formatRupiah(remainingBudget)}',
-                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Batas: ${_formatRupiah(_budgetLimit)}',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isOverBudget
+                                          ? Colors.redAccent
+                                          : Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isOverBudget
+                                            ? Colors.red.shade300
+                                            : Colors.white.withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isOverBudget
+                                          ? 'Overbudget: ${_formatRupiah(remainingBudget.abs())}'
+                                          : 'Sisa: ${_formatRupiah(remainingBudget)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 36),
 
-                    // 3. Header Bagian Transaksi Terakhir
+                    // --- 3. HEADER TRANSAKSI TERAKHIR ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Transaksi Terakhir',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF00838F),
+                          ),
                         ),
                         TextButton(
                           onPressed: () {
-                            // Navigasi ke Halaman History dan panggil reload saat kembali (opsional)
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const HistoryPage()),
-                            ).then((_) => _fetchDashboardData()); 
+                              MaterialPageRoute(
+                                builder: (context) => const HistoryPage(),
+                              ),
+                            ).then((_) => _fetchDashboardData());
                           },
-                          child: const Text('Lihat Semua', style: TextStyle(color: Colors.teal)),
+                          style: TextButton.styleFrom(padding: EdgeInsets.zero),
+                          child: const Text(
+                            'Lihat Semua',
+                            style: TextStyle(
+                              color: Color(0xFF00ACC1),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
 
-                    // 4. Daftar Transaksi Terakhir Dinamis
+                    // --- 4. DAFTAR TRANSAKSI TERAKHIR ---
                     if (_recentTransactions.isEmpty)
                       Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.symmetric(vertical: 40.0),
                           child: Column(
                             children: [
-                              Icon(Icons.receipt_long, size: 60, color: Colors.grey.shade300),
-                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.cyan.withOpacity(0.05),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.receipt_long,
+                                  size: 60,
+                                  color: Color(0xFFB2EBF2),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               Text(
                                 'Belum ada transaksi bulan ini.',
-                                style: TextStyle(color: Colors.grey.shade500),
+                                style: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
@@ -262,12 +380,15 @@ class _HomePageState extends State<HomePage> {
                       ..._recentTransactions.map((tx) {
                         return _buildTransactionItem(
                           context,
-                          icon: Icons.receipt_outlined, // Bisa disesuaikan nanti dengan kategori
+                          icon: Icons.receipt_outlined,
                           title: tx['title'].toString(),
                           date: _formatDate(tx['transaction_date'].toString()),
-                          amount: '- ${_formatRupiah((tx['amount'] as num).toDouble())}',
+                          amount:
+                              '- ${_formatRupiah((tx['amount'] as num).toDouble())}',
                         );
                       }),
+
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -275,7 +396,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Widget custom list transaksi berulang
+  // --- WIDGET CUSTOM LIST TRANSAKSI (UPDATE DESAIN) ---
   Widget _buildTransactionItem(
     BuildContext context, {
     required IconData icon,
@@ -283,31 +404,63 @@ class _HomePageState extends State<HomePage> {
     required String date,
     required String amount,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.teal.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: Colors.teal),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 10,
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(date, style: TextStyle(color: Colors.grey.shade600)),
-        trailing: Text(
-          amount,
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(
+              0xFF00BCD4,
+            ).withOpacity(0.15), // Background cyan lembut
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: const Color(0xFF00897B),
+            size: 24,
+          ), // Ikon Teal
+        ),
+        title: Text(
+          title,
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: Colors.redAccent, 
+            color: Colors.black87,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4.0),
+          child: Text(
+            date,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        trailing: Text(
+          amount,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            color: Colors.redAccent, // Tetap merah karena pengeluaran
           ),
         ),
       ),
