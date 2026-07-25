@@ -13,16 +13,12 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
+  // --- SISTEM & LOGIC (TIDAK DIGANGGU GUGAT) ---
   final _nameController = TextEditingController();
   final _institutionController = TextEditingController();
   final _roleController = TextEditingController();
-
   bool _isLoading = false;
-
-  // Variabel untuk menampung URL foto dari database
   String? _currentAvatarUrl;
-
-  // Variabel untuk menampung file foto sementara yang dipilih dari galeri
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
 
@@ -34,23 +30,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   // 1. MENGAMBIL DATA SAAT INI (TERMASUK FOTO)
   Future<void> _loadCurrentData() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
 
-    final data = await Supabase.instance.client
-        .from('profiles')
-        .select()
-        .eq('id', user.id)
-        .single();
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .single();
 
-    setState(() {
-      _nameController.text = data['full_name'] ?? '';
-      _institutionController.text = data['institution'] == 'Belum diatur'
-          ? ''
-          : data['institution'];
-      _roleController.text = data['role'] == 'Pengguna' ? '' : data['role'];
-      _currentAvatarUrl = data['avatar_url']; // Ambil URL foto
-    });
+      setState(() {
+        _nameController.text = data['full_name'] ?? '';
+        _institutionController.text = data['institution'] == 'Belum diatur'
+            ? ''
+            : data['institution'];
+        _roleController.text = data['role'] == 'Pengguna' ? '' : data['role'];
+        _currentAvatarUrl = data['avatar_url']; // Ambil URL foto
+      });
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+    }
   }
 
   // 2. FUNGSI MEMBUKA GALERI HP
@@ -149,66 +149,90 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Menentukan ImageProvider secara dinamis
+    ImageProvider? imageProvider;
+    if (_imageFile != null) {
+      imageProvider = FileImage(_imageFile!);
+    } else if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty) {
+      imageProvider = NetworkImage(_currentAvatarUrl!);
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors
+          .grey[50], // Diubah ke abu-abu sangat muda agar card input menonjol
       appBar: AppBar(
         title: const Text(
           'Edit Profil',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
+        centerTitle: true, // Modern look
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0.5, // Sedikit bayangan untuk memisahkan appbar dan body
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        physics: const BouncingScrollPhysics(), // Efek scroll halus
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- BAGIAN FOTO PROFIL ---
+            // --- BAGIAN FOTO PROFIL (UPDATE DESAIN) ---
             Center(
               child: GestureDetector(
                 onTap: _pickImage, // Klik untuk buka galeri
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.teal.shade50,
-                      // Logika prioritas tampilan foto:
-                      // 1. Jika ada _imageFile (baru pilih dari galeri), tampilkan itu
-                      // 2. Jika tidak ada _imageFile tapi ada _currentAvatarUrl di database, tampilkan dari internet
-                      // 3. Jika kosong semua, jangan tampilkan background image
-                      backgroundImage: _imageFile != null
-                          ? FileImage(_imageFile!) as ImageProvider
-                          : (_currentAvatarUrl != null &&
-                                _currentAvatarUrl!.isNotEmpty)
-                          ? NetworkImage(_currentAvatarUrl!)
-                          : null,
-                      // Logika tampilan Ikon Default (Hanya muncul jika tidak ada foto sama sekali)
-                      child:
-                          _imageFile == null &&
-                              (_currentAvatarUrl == null ||
-                                  _currentAvatarUrl!.isEmpty)
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.teal,
-                            )
-                          : null,
+                    // Bingkai dan Bayangan Foto
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 15,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.white, width: 4),
+                      ),
+                      child: CircleAvatar(
+                        radius: 60, // Sedikit lebih besar
+                        backgroundColor: Colors.teal.shade50,
+                        backgroundImage: imageProvider,
+                        // Ikon Default muncul jika tidak ada foto
+                        child: imageProvider == null
+                            ? const Icon(
+                                Icons.person,
+                                size: 70,
+                                color: Colors.teal,
+                              )
+                            : null,
+                      ),
                     ),
+                    // Ikon Kamera/Edit di pojok
                     Positioned(
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.teal,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
                         child: const Icon(
-                          Icons.camera_alt,
+                          Icons.camera_alt_rounded,
                           color: Colors.white,
-                          size: 16,
+                          size: 20,
                         ),
                       ),
                     ),
@@ -220,60 +244,108 @@ class _EditProfilePageState extends State<EditProfilePage> {
             const Center(
               child: Text(
                 'Ketuk foto untuk mengubah',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // --- FORM INPUT ---
-            CustomTextField(
-              controller: _nameController,
-              labelText: 'Nama Lengkap',
-              prefixIcon: Icons.person_outline,
-            ),
-            const SizedBox(height: 16),
-
-            CustomTextField(
-              controller: _institutionController,
-              labelText: 'Asal Instansi (Contoh: Universitas Jambi)',
-              prefixIcon: Icons.business_outlined,
-            ),
-            const SizedBox(height: 16),
-
-            CustomTextField(
-              controller: _roleController,
-              labelText: 'Peran / Pekerjaan (Contoh: Web Developer)',
-              prefixIcon: Icons.work_outline,
-            ),
-            const SizedBox(height: 40),
-
-            // --- TOMBOL SIMPAN ---
-            ElevatedButton(
-              onPressed: _isLoading ? null : _saveProfile,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.teal,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+            ),
+            const SizedBox(height: 40),
+
+            // --- HEADER FORM ---
+            Row(
+              children: [
+                const Icon(Icons.badge_outlined, color: Colors.grey, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "Informasi Dasar",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // --- FORM INPUT (UPDATE DESAIN LEBIH RAPI) ---
+            // Dibungkus Container/Card putih agar lebih menonjol di atas background abu-abu
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  CustomTextField(
+                    controller: _nameController,
+                    labelText: 'Nama Lengkap',
+                    prefixIcon: Icons.person_outline_rounded,
+                  ),
+                  const SizedBox(height: 20), // Jarak lebih besar antar input
+
+                  CustomTextField(
+                    controller: _institutionController,
+                    labelText: 'Asal Instansi',
+                    // hintText: 'Contoh: Universitas Jambi',
+                    prefixIcon: Icons.account_balance_outlined,
+                  ),
+                  const SizedBox(height: 20),
+
+                  CustomTextField(
+                    controller: _roleController,
+                    labelText: 'Peran / Pekerjaan',
+                    // hintText: 'Contoh: Web Developer',
+                    prefixIcon: Icons.work_outline_rounded,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 48), // Jarak besar sebelum tombol
+            // --- TOMBOL SIMPAN (UPDATE DESAIN PREMIUM) ---
+            SizedBox(
+              width: double.infinity,
+              height: 55, // Tombol lebih tinggi dan nyaman ditekan
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  foregroundColor: Colors.white,
+                  elevation: 3,
+                  shadowColor: Colors.teal.withOpacity(0.4),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16), // Rounded modern
+                  ),
+                  disabledBackgroundColor: Colors.teal.shade200,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Simpan Perubahan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
                       ),
-                    )
-                  : const Text(
-                      'Simpan Perubahan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+              ),
             ),
           ],
         ),
