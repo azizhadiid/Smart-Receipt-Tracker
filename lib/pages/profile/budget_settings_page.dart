@@ -21,7 +21,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     _loadCurrentBudget();
   }
 
-  // --- 1. MENGAMBIL BUDGET SAAT INI ---
+  // --- 1. MENGAMBIL BUDGET SAAT INI (LOGIKA TETAP) ---
   Future<void> _loadCurrentBudget() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
@@ -43,7 +43,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
     }
   }
 
-  // --- 2. MENYIMPAN BUDGET BARU ---
+  // --- 2. MENYIMPAN BUDGET BARU (LOGIKA TETAP) ---
   Future<void> _saveBudget() async {
     // Hilangkan semua titik sebelum disimpan ke database
     final rawValue = _budgetController.text.replaceAll('.', '');
@@ -123,99 +123,171 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
       appBar: AppBar(
         title: const Text(
           'Batas Budget',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan Gelap
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF00838F)),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF00BCD4)),
+            )
+          : SingleChildScrollView(
+              // Diganti menjadi SingleChildScrollView agar aman dari keyboard overlap
+              padding: const EdgeInsets.symmetric(
+                horizontal: 28.0,
+                vertical: 32.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.account_balance_wallet,
-                    size: 80,
-                    color: Colors.teal,
+                  // --- HEADER ICON ---
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00BCD4).withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet_rounded,
+                        size: 70,
+                        color: Color(0xFF00897B),
+                      ),
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+
+                  // --- TEXT KETERANGAN ---
                   const Text(
                     'Atur Batas Pengeluaran Bulanan',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF00838F),
+                    ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Kami akan memberikan notifikasi jika pengeluaranmu sudah mendekati batas ini.',
+                  const SizedBox(height: 12),
+                  Text(
+                    'Kami akan memberikan notifikasi jika pengeluaranmu sudah mendekati batas nominal ini.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
-                  // --- 3. INPUT FIELD DENGAN FORMATTER ---
-                  TextFormField(
-                    controller: _budgetController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
+                  // --- 3. INPUT FIELD DENGAN FORMATTER (UPDATE DESAIN) ---
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
-                    // Aturan ketat agar hanya bisa mengetik angka, lalu diolah menjadi format titik
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      RupiahInputFormatter(),
-                    ],
-                    decoration: InputDecoration(
-                      labelText: 'Nominal Budget',
-                      prefixText: 'Rp ', // Teks statis di depan input
-                      prefixStyle: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal,
+                    child: TextFormField(
+                      controller: _budgetController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF00838F), // Cyan Gelap
+                        letterSpacing: 1,
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: Colors.teal,
-                          width: 2,
+                      // Aturan ketat agar hanya bisa mengetik angka, lalu diolah menjadi format titik
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        RupiahInputFormatter(),
+                      ],
+                      decoration: InputDecoration(
+                        labelText: 'Nominal Budget',
+                        labelStyle: TextStyle(
+                          color: Colors.grey.shade400,
+                          fontSize: 14,
+                        ),
+                        prefixText: 'Rp ', // Teks statis di depan input
+                        prefixStyle: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF00838F),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 20,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
 
-                  ElevatedButton(
-                    onPressed: _isSaving ? null : _saveBudget,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // --- 4. TOMBOL SIMPAN 3D ---
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFF00BCD4),
+                          Color(0xFF00897B),
+                        ], // Cyan ke Teal
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00BCD4).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveBudget,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors
+                            .transparent, // Transparan agar gradient terlihat
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : const Text(
+                              'Simpan Perubahan',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                    ),
                   ),
                 ],
               ),
@@ -224,7 +296,7 @@ class _BudgetSettingsPageState extends State<BudgetSettingsPage> {
   }
 }
 
-// --- KELAS FORMATTER RUPIAH CUSTOM ---
+// --- KELAS FORMATTER RUPIAH CUSTOM (TIDAK DIUBAH) ---
 // Kelas ini bertugas mencegat ketikan pengguna di layar dan menyisipkan titik setiap 3 digit
 class RupiahInputFormatter extends TextInputFormatter {
   @override
