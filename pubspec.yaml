@@ -41,6 +41,7 @@ dependencies:
   excel: ^4.0.6
   file_saver: ^0.4.0
   image_picker: ^1.2.3
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -95,3 +96,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_size: 21 # Opsional, untuk Android
