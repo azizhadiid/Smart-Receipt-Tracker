@@ -11,6 +11,7 @@ class SecuritySettingsPage extends StatefulWidget {
 }
 
 class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
+  // --- SISTEM & LOGIC (TIDAK DIGANGGU GUGAT) ---
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -20,7 +21,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
-  // --- LOGIKA UPDATE PASSWORD ---
   Future<void> _updatePassword() async {
     final currentPassword = _currentPasswordController.text;
     final newPassword = _newPasswordController.text;
@@ -73,7 +73,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
       }
 
       // 4. Verifikasi Password Saat Ini (Re-authentication)
-      // Kita mencoba login di latar belakang. Jika error dilempar, berarti password lama salah.
       await Supabase.instance.client.auth.signInWithPassword(
         email: user.email!,
         password: currentPassword,
@@ -100,7 +99,6 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     } on AuthException catch (e) {
       if (mounted) {
         String errorMessage = e.message;
-        // Menangkap error jika password lama yang diketikkan ternyata salah
         if (errorMessage.toLowerCase().contains('invalid login credentials')) {
           errorMessage = 'Password saat ini yang Anda masukkan salah.';
         } else if (errorMessage.toLowerCase().contains('same as the old')) {
@@ -136,114 +134,202 @@ class _SecuritySettingsPageState extends State<SecuritySettingsPage> {
     super.dispose();
   }
 
+  // --- DESAIN UI (DIPERBARUI) ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50], // Background lebih bersih
       appBar: AppBar(
         title: const Text(
           'Keamanan Akun',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan Gelap
+          ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF00838F)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        physics: const BouncingScrollPhysics(), // Efek scroll modern
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.shield_outlined, size: 80, color: Colors.teal),
-            const SizedBox(height: 16),
+            // --- HEADER IKON ---
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00BCD4).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.shield_rounded, // Sedikit diubah agar lebih modern
+                  size: 70,
+                  color: Color(0xFF00897B),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // --- TEKS INSTRUKSI ---
+            const Text(
+              'Perbarui Password Anda',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF00838F),
+              ),
+            ),
+            const SizedBox(height: 8),
             Text(
               'Pastikan password Anda menggunakan kombinasi huruf dan angka agar akun tetap aman.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 40),
-
-            // Field Password Saat Ini
-            CustomTextField(
-              controller: _currentPasswordController,
-              labelText: 'Password Saat Ini',
-              prefixIcon: Icons.lock_outline,
-              obscureText: _obscureCurrent,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureCurrent ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () =>
-                    setState(() => _obscureCurrent = !_obscureCurrent),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            const Divider(),
-            const SizedBox(height: 20),
-
-            // Field Password Baru
-            CustomTextField(
-              controller: _newPasswordController,
-              labelText: 'Password Baru',
-              prefixIcon: Icons.lock,
-              obscureText: _obscureNew,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureNew ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () => setState(() => _obscureNew = !_obscureNew),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Field Konfirmasi Password Baru
-            CustomTextField(
-              controller: _confirmPasswordController,
-              labelText: 'Konfirmasi Password Baru',
-              prefixIcon: Icons.lock_reset,
-              obscureText: _obscureConfirm,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscureConfirm ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 40),
 
-            // Tombol Simpan
-            ElevatedButton(
-              onPressed: _isLoading ? null : _updatePassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                disabledBackgroundColor: Colors.teal.shade200,
+            // --- WADAH FORM INPUT ---
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+              child: Column(
+                children: [
+                  // Field Password Saat Ini
+                  CustomTextField(
+                    controller: _currentPasswordController,
+                    labelText: 'Password Saat Ini',
+                    prefixIcon: Icons.lock_outline_rounded,
+                    obscureText: _obscureCurrent,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureCurrent
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey.shade400,
                       ),
-                    )
-                  : const Text(
-                      'Simpan Password Baru',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      onPressed: () =>
+                          setState(() => _obscureCurrent = !_obscureCurrent),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Garis Pemisah Lembut
+                  Divider(
+                    color: Colors.grey.shade200,
+                    thickness: 1.5,
+                    height: 32,
+                  ),
+
+                  // Field Password Baru
+                  CustomTextField(
+                    controller: _newPasswordController,
+                    labelText: 'Password Baru',
+                    prefixIcon: Icons.lock_rounded,
+                    obscureText: _obscureNew,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNew ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey.shade400,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscureNew = !_obscureNew),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Field Konfirmasi Password Baru
+                  CustomTextField(
+                    controller: _confirmPasswordController,
+                    labelText: 'Konfirmasi Password Baru',
+                    prefixIcon: Icons.lock_reset_rounded,
+                    obscureText: _obscureConfirm,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.grey.shade400,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 40),
+
+            // --- TOMBOL SIMPAN GRADASI 3D ---
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF00BCD4),
+                    Color(0xFF00897B),
+                  ], // Cyan ke Teal
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00BCD4).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _updatePassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.transparent, // Transparan agar gradient terlihat
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : const Text(
+                        'Simpan Password Baru',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20), // Tambahan ruang kosong di bawah
           ],
         ),
       ),

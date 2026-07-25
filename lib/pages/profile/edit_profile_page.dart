@@ -218,7 +218,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.teal,
+                          color: const Color(0xFF00BCD4),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 3),
                           boxShadow: [
@@ -246,7 +246,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 'Ketuk foto untuk mengubah',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.teal,
+                  color: Color(0xFF00838F),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -319,7 +319,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
+                  backgroundColor: const Color(0xFF00BCD4),
                   foregroundColor: Colors.white,
                   elevation: 3,
                   shadowColor: Colors.teal.withOpacity(0.4),
