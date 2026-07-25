@@ -17,10 +17,15 @@ class _ScanPageState extends State<ScanPage> {
       appBar: AppBar(
         title: const Text(
           'Scan Struk',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan Gelap
+            letterSpacing: 0.5,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -32,42 +37,65 @@ class _ScanPageState extends State<ScanPage> {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.teal.shade200,
-                    width: 2,
-                    style: BorderStyle
-                        .solid, // Nanti bisa diubah jadi dashed (putus-putus) jika butuh
-                  ),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 2,
-                      blurRadius: 5,
+                      color: Colors.grey.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.document_scanner_outlined,
-                      size: 80,
-                      color: Colors.teal.shade300,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Belum ada struk yang dipilih',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 16,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00BCD4).withOpacity(0.03),
+                      border: Border.all(
+                        color: const Color(0xFF00BCD4).withOpacity(0.3),
+                        width: 1.5,
                       ),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                  ],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00BCD4).withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.document_scanner_rounded,
+                            size: 60,
+                            color: Color(0xFF00897B),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Ambil foto struk belanja Anda',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Pastikan foto terang dan teks terbaca jelas',
+                          style: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 32),
 
             // 2. Tombol Pilihan (Kamera / Galeri)
             Row(
@@ -77,13 +105,23 @@ class _ScanPageState extends State<ScanPage> {
                     onPressed: () {
                       // Logika memanggil kamera perangkat akan ada di sini
                     },
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Kamera'),
+                    icon: const Icon(Icons.camera_alt, size: 20),
+                    label: const Text(
+                      'Kamera',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00897B),
+                      backgroundColor: const Color(
+                        0xFF00BCD4,
+                      ).withOpacity(0.05),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.teal.shade300),
+                      side: const BorderSide(
+                        color: Color(0xFF00BCD4),
+                        width: 1.5,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
@@ -94,42 +132,77 @@ class _ScanPageState extends State<ScanPage> {
                     onPressed: () {
                       // Logika membuka galeri perangkat akan ada di sini
                     },
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Galeri'),
+                    icon: const Icon(Icons.photo_library, size: 20),
+                    label: const Text(
+                      'Galeri',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00897B),
+                      backgroundColor: const Color(
+                        0xFF00BCD4,
+                      ).withOpacity(0.05),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.teal.shade300),
+                      side: const BorderSide(
+                        color: Color(0xFF00BCD4),
+                        width: 1.5,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // 3. Tombol Proses (ML Kit)
-            ElevatedButton(
-              onPressed: () {
-                // Logika OCR ML Kit untuk mengekstrak harga dari foto akan ada di sini
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // 3. Tombol Proses (ML Kit) dengan Desain Gradasi 3D
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF00BCD4),
+                    Color(0xFF00897B),
+                  ], // Cyan ke Teal
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-                elevation: 2,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00BCD4).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: const Text(
-                'Proses Struk',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              child: ElevatedButton(
+                onPressed: () {
+                  // Logika OCR ML Kit untuk mengekstrak harga dari foto akan ada di sini
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor:
+                      Colors.transparent, // Transparan agar gradient terlihat
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Proses Struk',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
               ),
             ),
             const SizedBox(
-              height: 10,
+              height: 20,
             ), // Memberi sedikit jarak dari bottom navigation bar
           ],
         ),
