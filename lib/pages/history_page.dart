@@ -6,7 +6,7 @@ class HistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dummy data untuk mensimulasikan daftar riwayat struk
+    // Dummy data untuk mensimulasikan daftar riwayat struk (LOGIKA TETAP)
     final List<Map<String, dynamic>> dummyTransactions = [
       {
         'title': 'Susu Kental Manis Kaleng',
@@ -53,37 +53,59 @@ class HistoryPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[50], // Background bersih
       appBar: AppBar(
         title: const Text(
           'Riwayat Transaksi',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan gelap modern
+            letterSpacing: 0.5,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filter Data',
-            onPressed: () {
-              // Nanti untuk fitur filter bulan/minggu
-            },
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.filter_list, color: Color(0xFF00838F)),
+              tooltip: 'Filter Data',
+              onPressed: () {
+                // Nanti untuk fitur filter bulan/minggu
+              },
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
-          // 1. Kolom Pencarian (Search Bar)
-          // 1. Kolom Pencarian (Search Bar)
+          // 1. Kolom Pencarian (Search Bar) - Update Desain Floating
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 20.0,
+            ),
             child: Container(
-              // Membungkus TextField dengan Container untuk memberikan bayangan
               decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
+                    color: Colors.grey.withOpacity(0.08),
+                    blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
                 ],
@@ -91,53 +113,87 @@ class HistoryPage extends StatelessWidget {
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Cari nama bahan baku atau toko...',
-                  prefixIcon: const Icon(Icons.search, color: Colors.teal),
+                  hintStyle: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF00ACC1),
+                  ),
                   filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  fillColor: Colors.transparent,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide:
-                        BorderSide.none, // Menghilangkan garis tepi bawaan
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
             ),
           ),
 
-          // 2. Daftar Riwayat menggunakan ListView.builder
+          // 2. Daftar Riwayat menggunakan ListView.builder - Update Desain Kartu
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               itemCount: dummyTransactions.length,
               itemBuilder: (context, index) {
-                final trx =
-                    dummyTransactions[index]; // Mengambil data per baris
+                final trx = dummyTransactions[index];
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: Colors.grey.shade200),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     leading: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF00BCD4).withOpacity(0.15),
+                        shape: BoxShape
+                            .circle, // Latar ikon melingkar konsisten dengan Home
                       ),
-                      child: Icon(trx['icon'] as IconData, color: Colors.teal),
+                      child: Icon(
+                        trx['icon'] as IconData,
+                        color: const Color(0xFF00897B),
+                        size: 24,
+                      ),
                     ),
                     title: Text(
                       trx['title'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
                     ),
-                    subtitle: Text(
-                      trx['date'] as String,
-                      style: TextStyle(color: Colors.grey.shade600),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        trx['date'] as String,
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -145,16 +201,19 @@ class HistoryPage extends StatelessWidget {
                         Text(
                           '- ${trx['amount']}',
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
                             color: Colors.redAccent,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right, color: Colors.grey),
+                        Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey.shade400,
+                          size: 20,
+                        ),
                       ],
                     ),
-
                     onTap: () {
                       Navigator.push(
                         context,
