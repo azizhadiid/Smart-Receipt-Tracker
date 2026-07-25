@@ -36,7 +36,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
     'Desember',
   ];
 
-  // --- FUNGSI UTAMA UNDUH LAPORAN ---
+  // --- FUNGSI UTAMA UNDUH LAPORAN (LOGIKA TETAP) ---
   Future<void> _downloadReport(String format) async {
     setState(() => _isDownloading = true);
 
@@ -128,7 +128,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
     }
   }
 
-  // --- LOGIKA PEMBUATAN PDF ---
+  // --- LOGIKA PEMBUATAN PDF (TETAP) ---
   Future<String> _generateAndSavePDF(
     List<dynamic> data,
     double totalAmount,
@@ -223,7 +223,7 @@ class _ExportDataPageState extends State<ExportDataPage> {
     return savedPath ?? "Penyimpanan dibatalkan";
   }
 
-  // --- LOGIKA PEMBUATAN EXCEL ---
+  // --- LOGIKA PEMBUATAN EXCEL (TETAP) ---
   Future<String> _generateAndSaveExcel(
     List<dynamic> data,
     double totalAmount,
@@ -281,45 +281,92 @@ class _ExportDataPageState extends State<ExportDataPage> {
       appBar: AppBar(
         title: const Text(
           'Unduh Laporan',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan Gelap
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFF00838F)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.analytics_outlined, size: 80, color: Colors.teal),
-            const SizedBox(height: 16),
+            // --- HEADER ICON (UPDATE DESAIN) ---
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00BCD4).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.analytics_rounded,
+                  size: 70,
+                  color: Color(0xFF00897B),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'Unduh rekapitulasi pengeluaran Anda dalam format PDF atau Excel. Pilih bulan dan tahun laporan di bawah ini.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 40),
 
-            // --- FILTER PERIODE ---
+            // --- FILTER PERIODE (UPDATE DESAIN) ---
             const Text(
-              'Pilih Periode',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'PILIH PERIODE',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey,
+                letterSpacing: 1.2,
+              ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   flex: 2,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         isExpanded: true,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Colors.grey.shade500,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00838F),
+                        ),
                         value: _selectedMonth,
                         items: List.generate(12, (index) {
                           return DropdownMenuItem(
@@ -340,15 +387,33 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 Expanded(
                   flex: 1,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         isExpanded: true,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Colors.grey.shade500,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF00838F),
+                        ),
                         value: _selectedYear,
                         items: List.generate(5, (index) {
                           int year = DateTime.now().year - index;
@@ -367,29 +432,50 @@ class _ExportDataPageState extends State<ExportDataPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 48),
 
-            // --- TOMBOL UNDUH ---
+            // --- TOMBOL UNDUH (UPDATE DESAIN PREMIUM) ---
             const Text(
-              'Pilih Format Dokumen',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              'FORMAT DOKUMEN',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey,
+                letterSpacing: 1.2,
+              ),
             ),
             const SizedBox(height: 16),
 
             if (_isDownloading)
-              const Center(child: CircularProgressIndicator(color: Colors.teal))
+              const Center(
+                child: CircularProgressIndicator(color: Color(0xFF00BCD4)),
+              )
             else
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _downloadReport('pdf'),
-                      icon: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                      label: const Text('Unduh PDF'),
+                      icon: Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: Colors.red.shade600,
+                      ),
+                      label: Text(
+                        'Unduh PDF',
+                        style: TextStyle(
+                          color: Colors.red.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.red.shade50,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        side: BorderSide(
+                          color: Colors.red.shade200,
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
@@ -398,18 +484,33 @@ class _ExportDataPageState extends State<ExportDataPage> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: () => _downloadReport('excel'),
-                      icon: const Icon(Icons.table_chart, color: Colors.green),
-                      label: const Text('Unduh Excel'),
+                      icon: Icon(
+                        Icons.table_chart_rounded,
+                        color: Colors.green.shade600,
+                      ),
+                      label: Text(
+                        'Unduh Excel',
+                        style: TextStyle(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.green.shade50,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        side: BorderSide(
+                          color: Colors.green.shade200,
+                          width: 1.5,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
