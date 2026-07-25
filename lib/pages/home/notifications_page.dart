@@ -6,17 +6,24 @@ class NotificationsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[50], // Latar belakang bersih
       appBar: AppBar(
         title: const Text(
           'Notifikasi',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF00838F), // Cyan gelap elegan
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true, // Judul diletakkan di tengah
+        iconTheme: const IconThemeData(color: Color(0xFF00838F)),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        physics:
+            const BouncingScrollPhysics(), // Efek scroll memantul yang modern
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         children: [
           _buildNotificationItem(
             icon: Icons.warning_amber_rounded,
@@ -28,7 +35,7 @@ class NotificationsPage extends StatelessWidget {
           ),
           _buildNotificationItem(
             icon: Icons.check_circle_outline,
-            color: Colors.teal,
+            color: const Color(0xFF00897B), // Menggunakan Teal dari tema utama
             title: 'Struk Berhasil Diproses',
             message:
                 'Struk belanja "Susu Kental Manis" berhasil dipindai dan disimpan.',
@@ -47,6 +54,7 @@ class NotificationsPage extends StatelessWidget {
     );
   }
 
+  // --- WIDGET CUSTOM NOTIFIKASI (UPDATE DESAIN) ---
   Widget _buildNotificationItem({
     required IconData icon,
     required Color color,
@@ -54,34 +62,61 @@ class NotificationsPage extends StatelessWidget {
     required String message,
     required String time,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            shape: BoxShape.circle, // Latar ikon melingkar
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            color: Colors.black87,
+          ),
+        ),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4.0),
+          padding: const EdgeInsets.only(top: 6.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(message),
-              const SizedBox(height: 8),
+              Text(
+                message,
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
               Text(
                 time,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade400,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
