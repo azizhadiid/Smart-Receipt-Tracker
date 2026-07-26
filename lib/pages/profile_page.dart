@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart'; // --- TAMBAHAN IMPORT INI ---
 import 'auth/login_page.dart';
 
 // Import sub-halaman
@@ -332,7 +333,18 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: Colors.grey,
                             ),
                             onTap: () async {
+                              // --- LOGIKA LOGOUT DIPERBARUI ---
+                              // 1. Hapus Sesi di Supabase
                               await Supabase.instance.client.auth.signOut();
+
+                              // 2. Hapus Sesi Google di Lokal (Penting agar muncul pop-up akun lagi)
+                              try {
+                                await GoogleSignIn().signOut();
+                              } catch (e) {
+                                debugPrint('Error logout google: $e');
+                              }
+
+                              // 3. Arahkan kembali ke Halaman Login
                               if (context.mounted) {
                                 Navigator.pushAndRemoveUntil(
                                   context,
@@ -354,7 +366,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // --- WIDGET CUSTOM MENU (UPDATE DESAIN) ---
+  // --- WIDGET CUSTOM MENU (TIDAK DIUBAH) ---
   Widget _buildProfileMenu({
     required IconData icon,
     required String title,

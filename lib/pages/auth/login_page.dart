@@ -1,8 +1,9 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:smart_receipt/pages/auth/reset_password_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart'; // Tambahan Import
+
 import '../../layouts/main_layout.dart';
 import '../../components/custom_alert.dart';
 import '../../components/custom_text_field.dart';
@@ -28,10 +29,13 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+
+    // --- PENDENGAR STATUS AUTENTIKASI ---
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
-    ) {
+    ) async {
       final AuthChangeEvent event = data.event;
+      final Session? session = data.session;
 
       if (event == AuthChangeEvent.passwordRecovery) {
         Navigator.push(
@@ -39,10 +43,44 @@ class _LoginPageState extends State<LoginPage> {
           MaterialPageRoute(builder: (context) => const ResetPasswordPage()),
         );
       }
+      // Logika pengecekan umur akun (Mencegah Auto-Signup via Google)
+      else if (event == AuthChangeEvent.signedIn && session != null) {
+        final user = session.user;
+        final createdAt = DateTime.parse(user.createdAt).toUtc();
+        final now = DateTime.now().toUtc();
+
+        if (now.difference(createdAt).inSeconds < 10) {
+          // Hapus akun hantu dan sign out
+          try {
+            await Supabase.instance.client.rpc('delete_ghost_account');
+          } catch (e) {
+            debugPrint('Gagal menghapus ghost account: $e');
+          }
+          await Supabase.instance.client.auth.signOut();
+
+          if (mounted) {
+            showCustomAlert(
+              context: context,
+              title: 'Akun Tidak Ditemukan',
+              message:
+                  'Email Google Anda belum terdaftar. Silakan daftar terlebih dahulu.',
+              isError: true,
+            );
+          }
+        } else {
+          // Lanjut ke Dashboard jika akun valid
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainLayout()),
+            );
+          }
+        }
+      }
     });
   }
 
-  // --- LOGIKA LOGIN & VALIDASI ---
+  // --- LOGIKA LOGIN EMAIL ---
   Future<void> _signIn() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -77,13 +115,7 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainLayout()),
-        );
-      }
+      // Navigasi dikendalikan oleh _authSubscription di atas
     } on AuthException catch (e) {
       if (mounted) {
         String errorMessage = 'Terjadi kesalahan saat login.';
@@ -103,6 +135,62 @@ class _LoginPageState extends State<LoginPage> {
           context: context,
           title: 'Terjadi Kesalahan',
           message: 'Pastikan koneksi internet stabil dan coba lagi.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // --- LOGIKA LOGIN GOOGLE NATIVE ---
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      const webClientId =
+          '757039015502-p2m5akek1lqduu6t1gr9ssbk7b92nm02.apps.googleusercontent.com';
+      const iosClientId =
+          '757039015502-m76273m6vi74k6bl9fi5nepvlfbbrqs7.apps.googleusercontent.com';
+
+      // 1. Inisialisasi konfigurasi Google Sign In
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        serverClientId: webClientId,
+        clientId: iosClientId,
+      );
+
+      // 2. Munculkan pop-up akun Google bawaan HP
+      final googleUser = await googleSignIn.signIn();
+
+      // Jika user menekan di luar kotak dialog / batal login
+      if (googleUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // 3. Ekstrak token keamanan dari Google
+      final googleAuth = await googleUser.authentication;
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        throw 'Gagal mendapatkan otorisasi dari Google.';
+      }
+
+      // 4. Masuk ke Supabase menggunakan ID Token Google
+      await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+
+      // Catatan: Setelah ini berhasil, _authSubscription di atas akan otomatis berjalan
+      // untuk memeriksa apakah akun ini legal (sudah daftar) atau ghost account.
+    } catch (e) {
+      if (mounted) {
+        showCustomAlert(
+          context: context,
+          title: 'Gagal Login Google',
+          message: e.toString(),
           isError: true,
         );
       }
@@ -134,7 +222,6 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- LOGO APLIKASI DENGAN EFEK BAYANGAN ---
                 Center(
                   child: Container(
                     decoration: BoxDecoration(
@@ -148,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     child: Image.asset(
-                      'assets/images/logo.png', // Sesuai dengan gambar logo baru
+                      'assets/images/logo.png',
                       width: 140,
                       height: 140,
                       errorBuilder: (context, error, stackTrace) {
@@ -163,14 +250,13 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
 
-                // --- TEKS SELAMAT DATANG ---
                 const Text(
                   'Selamat Datang',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF00838F), // Cyan gelap agar elegan
+                    color: Color(0xFF00838F),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -182,7 +268,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 40),
 
-                // --- FORM INPUT ---
                 CustomTextField(
                   controller: _emailController,
                   labelText: 'Email',
@@ -208,7 +293,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                // --- LUPA PASSWORD ---
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -221,7 +305,7 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF00ACC1), // Cyan accent
+                      foregroundColor: const Color(0xFF00ACC1),
                       padding: EdgeInsets.zero,
                     ),
                     child: const Text(
@@ -232,15 +316,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- TOMBOL LOGIN UTAMA ---
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
                     gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF00BCD4),
-                        Color(0xFF00897B),
-                      ], // Cyan ke Teal
+                      colors: [Color(0xFF00BCD4), Color(0xFF00897B)],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
@@ -256,8 +336,7 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _isLoading ? null : _signIn,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors
-                          .transparent, // Transparan agar gradient terlihat
+                      backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -285,7 +364,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- GARIS PEMISAH ---
                 Row(
                   children: [
                     Expanded(
@@ -309,11 +387,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // --- TOMBOL LOGIN GOOGLE ---
+                // --- TOMBOL LOGIN GOOGLE YANG SUDAH TERHUBUNG ---
                 OutlinedButton(
-                  onPressed: () {
-                    // Logika login Google nantinya di sini
-                  },
+                  onPressed: _isLoading ? null : _signInWithGoogle,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     backgroundColor: Colors.white,
@@ -325,7 +401,6 @@ class _LoginPageState extends State<LoginPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Menggunakan icon Google dari URL untuk tampilan nyata
                       Image.network(
                         'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
                         height: 24,
@@ -350,7 +425,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
 
-                // --- LINK REGISTER ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
