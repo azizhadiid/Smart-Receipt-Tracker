@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // Tambahkan package intl di pubspec.yaml jika belum ada
 import '../../components/custom_alert.dart';
 
 class ScanPage extends StatefulWidget {
@@ -16,7 +15,7 @@ class _ScanPageState extends State<ScanPage> {
   File? _selectedFile;
   String? _fileName;
   String? _fileExtension;
-  final bool _isProcessing = false;
+  bool _isProcessing = false; // Dihapus kata 'final' agar loading bisa berjalan
 
   // --- LOGIKA MEMILIH FILE DARI GALERI/PENYIMPANAN ---
   Future<void> _pickFile() async {
@@ -45,8 +44,8 @@ class _ScanPageState extends State<ScanPage> {
     }
   }
 
-  // --- POPUP FORM MANUAL SEBELUM UPLOAD ---
-  void _showManualInputForm() {
+  // --- LOGIKA UPLOAD KE SUPABASE & SIMPAN KE DATABASE (SEDERHANA) ---
+  Future<void> _uploadToSupabase() async {
     if (_selectedFile == null) {
       showCustomAlert(
         context: context,
@@ -57,160 +56,8 @@ class _ScanPageState extends State<ScanPage> {
       return;
     }
 
-    final titleController = TextEditingController();
-    final amountController = TextEditingController();
-    DateTime selectedDate = DateTime.now();
-    bool isUploading = false;
+    setState(() => _isProcessing = true);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: const Text(
-                'Detail Transaksi',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF00838F),
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Masukkan detail secara manual karena sistem ML Kit belum diaktifkan.',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: titleController,
-                      decoration: InputDecoration(
-                        labelText: 'Nama Transaksi / Toko',
-                        prefixIcon: const Icon(Icons.store),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Total Harga (Rp)',
-                        prefixIcon: const Icon(Icons.monetization_on),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-                        if (picked != null && picked != selectedDate) {
-                          setStateDialog(() {
-                            selectedDate = picked;
-                          });
-                        }
-                      },
-                      icon: const Icon(Icons.calendar_today, size: 18),
-                      label: Text(
-                        DateFormat('dd MMMM yyyy').format(selectedDate),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                if (!isUploading)
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Batal',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ElevatedButton(
-                  onPressed: isUploading
-                      ? null
-                      : () async {
-                          if (titleController.text.isEmpty ||
-                              amountController.text.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Harap isi semua kolom'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-
-                          setStateDialog(() => isUploading = true);
-
-                          await _uploadToSupabase(
-                            title: titleController.text,
-                            amount: double.parse(amountController.text),
-                            date: selectedDate,
-                          );
-
-                          if (context.mounted) {
-                            Navigator.pop(
-                              context,
-                            ); // Tutup dialog setelah selesai
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00897B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: isUploading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Simpan Data',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // --- LOGIKA UPLOAD KE SUPABASE & SIMPAN KE DATABASE ---
-  Future<void> _uploadToSupabase({
-    required String title,
-    required double amount,
-    required DateTime date,
-  }) async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) throw Exception('Sesi pengguna tidak valid.');
@@ -229,25 +76,25 @@ class _ScanPageState extends State<ScanPage> {
           .from('receipts')
           .getPublicUrl(uniqueFileName);
 
-      // 4. Simpan ke Database Tabel 'transactions' menggunakan data inputan
+      // 4. Simpan ke Database Tabel 'transactions' menggunakan data DUMMY sementara
       await Supabase.instance.client.from('transactions').insert({
         'user_id': user.id,
-        'title': title,
-        'amount': amount,
-        'transaction_date': date.toIso8601String(),
-        'receipt_image_url':
-            publicUrl, // Nama kolom disesuaikan dengan skema Anda
+        'title': 'Struk Baru ($_fileExtension)', // Judul sementara
+        'amount': 0, // Harga 0 sementara
+        'transaction_date': DateTime.now()
+            .toIso8601String(), // Tanggal hari ini
+        'receipt_image_url': publicUrl, // Link gambar dari storage
       });
 
       if (mounted) {
         showCustomAlert(
           context: context,
           title: 'Berhasil',
-          message: 'Struk berhasil disimpan ke riwayat Anda!',
+          message: 'Gambar telah terscan dan tersimpan ke riwayat!',
           isError: false,
         );
 
-        // Reset state utama setelah berhasil
+        // Reset state setelah upload berhasil
         setState(() {
           _selectedFile = null;
           _fileName = null;
@@ -272,6 +119,8 @@ class _ScanPageState extends State<ScanPage> {
           isError: true,
         );
       }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -311,7 +160,6 @@ class _ScanPageState extends State<ScanPage> {
       );
     }
 
-    // Jika file adalah gambar, tampilkan preview gambar
     if (['jpg', 'jpeg', 'png'].contains(_fileExtension)) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(22),
@@ -324,7 +172,6 @@ class _ScanPageState extends State<ScanPage> {
       );
     }
 
-    // Jika file adalah PDF atau Excel, tampilkan Ikon
     IconData fileIcon = Icons.insert_drive_file;
     Color iconColor = Colors.grey;
     if (_fileExtension == 'pdf') {
@@ -386,7 +233,6 @@ class _ScanPageState extends State<ScanPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 1. Area Preview Gambar / File
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -419,7 +265,6 @@ class _ScanPageState extends State<ScanPage> {
             ),
             const SizedBox(height: 32),
 
-            // 2. Tombol Pilihan (Kamera / Galeri)
             Row(
               children: [
                 Expanded(
@@ -483,7 +328,6 @@ class _ScanPageState extends State<ScanPage> {
             ),
             const SizedBox(height: 24),
 
-            // 3. Tombol Proses & Upload (Memicu Pop-Up Form)
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
@@ -501,7 +345,8 @@ class _ScanPageState extends State<ScanPage> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: _isProcessing ? null : _showManualInputForm,
+                // Memanggil _uploadToSupabase secara langsung tanpa pop-up
+                onPressed: _isProcessing ? null : _uploadToSupabase,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Colors.transparent,
@@ -520,7 +365,7 @@ class _ScanPageState extends State<ScanPage> {
                         ),
                       )
                     : const Text(
-                        'Unggah & Proses Struk',
+                        'Unggah Gambar',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
