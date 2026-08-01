@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../components/custom_alert.dart';
 
@@ -15,7 +16,33 @@ class _ScanPageState extends State<ScanPage> {
   File? _selectedFile;
   String? _fileName;
   String? _fileExtension;
-  bool _isProcessing = false; // Dihapus kata 'final' agar loading bisa berjalan
+  bool _isProcessing = false;
+
+  Future<void> _scanReceiptWithCamera() async {
+    try {
+      final image = await ImagePicker().pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (image == null || !mounted) return;
+
+      setState(() {
+        _selectedFile = File(image.path);
+        _fileName = image.name;
+        _fileExtension = image.name.split('.').last.toLowerCase();
+      });
+    } catch (e) {
+      if (mounted) {
+        showCustomAlert(
+          context: context,
+          title: 'Kamera Tidak Dapat Dibuka',
+          message: 'Periksa izin kamera perangkat lalu coba lagi.\n$e',
+          isError: true,
+        );
+      }
+    }
+  }
 
   // --- LOGIKA MEMILIH FILE DARI GALERI/PENYIMPANAN ---
   Future<void> _pickFile() async {
@@ -228,13 +255,54 @@ class _ScanPageState extends State<ScanPage> {
         elevation: 0,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Container(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+          final isShort = constraints.maxHeight < 650;
+          final pagePadding = isNarrow ? 16.0 : 24.0;
+          final previewHeight = (constraints.maxHeight * (isShort ? 0.32 : 0.42))
+              .clamp(180.0, 360.0)
+              .toDouble();
+          final buttonPadding = EdgeInsets.symmetric(
+            vertical: isShort ? 13 : 16,
+          );
+
+          final scanButton = OutlinedButton.icon(
+            onPressed: _isProcessing ? null : _scanReceiptWithCamera,
+            icon: const Icon(Icons.document_scanner, size: 20),
+            label: const Text('Scan', style: TextStyle(fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF00897B),
+              backgroundColor: const Color(0xFF00BCD4).withOpacity(0.05),
+              padding: buttonPadding,
+              side: const BorderSide(color: Color(0xFF00BCD4), width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+          );
+          final fileButton = OutlinedButton.icon(
+            onPressed: _isProcessing ? null : _pickFile,
+            icon: const Icon(Icons.folder, size: 20),
+            label: const Text(
+              'Pilih File',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF00897B),
+              backgroundColor: const Color(0xFF00BCD4).withOpacity(0.05),
+              padding: buttonPadding,
+              side: const BorderSide(color: Color(0xFF00BCD4), width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+          );
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(pagePadding, pagePadding, pagePadding, 108),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: previewHeight,
+                  child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
@@ -261,74 +329,29 @@ class _ScanPageState extends State<ScanPage> {
                     child: _buildFilePreview(),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      showCustomAlert(
-                        context: context,
-                        title: 'Info',
-                        message:
-                            'Fitur kamera akan diaktifkan nanti saat pengujian di perangkat asli.',
-                        isError: false,
-                      );
-                    },
-                    icon: const Icon(Icons.camera_alt, size: 20),
-                    label: const Text(
-                      'Kamera',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF00897B),
-                      backgroundColor: const Color(
-                        0xFF00BCD4,
-                      ).withOpacity(0.05),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(
-                        color: Color(0xFF00BCD4),
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isProcessing ? null : _pickFile,
-                    icon: const Icon(Icons.folder, size: 20),
-                    label: const Text(
-                      'Pilih File',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF00897B),
-                      backgroundColor: const Color(
-                        0xFF00BCD4,
-                      ).withOpacity(0.05),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: const BorderSide(
-                        color: Color(0xFF00BCD4),
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
+                SizedBox(height: isShort ? 20 : 32),
+                if (isNarrow)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      scanButton,
+                      const SizedBox(height: 12),
+                      fileButton,
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(child: scanButton),
+                      const SizedBox(width: 16),
+                      Expanded(child: fileButton),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                SizedBox(height: isShort ? 16 : 24),
 
-            Container(
+                Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 gradient: const LinearGradient(
@@ -375,9 +398,11 @@ class _ScanPageState extends State<ScanPage> {
                       ),
               ),
             ),
-            const SizedBox(height: 20),
-          ],
-        ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
