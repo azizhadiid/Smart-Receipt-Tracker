@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_receipt/pages/history/transaction_detail_page.dart';
 
+enum _HistoryFilter { all, today, last7Days, thisMonth }
+
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
@@ -13,12 +15,109 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   List<Map<String, dynamic>> _transactions = [];
   bool _isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  _HistoryFilter _activeFilter = _HistoryFilter.all;
 
   @override
   void initState() {
     super.initState();
     _fetchTransactions();
   }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, dynamic>> get _filteredTransactions {
+    final keyword = _searchQuery.trim().toLowerCase();
+    final now = DateTime.now();
+    final startOfToday = DateTime(now.year, now.month, now.day);
+    final startOfMonth = DateTime(now.year, now.month);
+
+    return _transactions.where((transaction) {
+      final title = (transaction['title'] ?? '').toString().toLowerCase();
+      final amount = formatRupiah(transaction['amount']).toLowerCase();
+      final dateText = formatDate(transaction['transaction_date']).toLowerCase();
+      final matchesSearch =
+          keyword.isEmpty ||
+          title.contains(keyword) ||
+          amount.contains(keyword) ||
+          dateText.contains(keyword);
+
+      final dateValue = transaction['transaction_date'];
+      final transactionDate = dateValue == null
+          ? null
+          : DateTime.tryParse(dateValue.toString())?.toLocal();
+      final matchesFilter = switch (_activeFilter) {
+        _HistoryFilter.all => true,
+        _HistoryFilter.today =>
+          transactionDate != null && !transactionDate.isBefore(startOfToday),
+        _HistoryFilter.last7Days =>
+          transactionDate != null &&
+              !transactionDate.isBefore(startOfToday.subtract(const Duration(days: 6))),
+        _HistoryFilter.thisMonth =>
+          transactionDate != null && !transactionDate.isBefore(startOfMonth),
+      };
+
+      return matchesSearch && matchesFilter;
+    }).toList();
+  }
+
+  String get _activeFilterLabel => switch (_activeFilter) {
+    _HistoryFilter.all => 'Semua transaksi',
+    _HistoryFilter.today => 'Hari ini',
+    _HistoryFilter.last7Days => '7 hari terakhir',
+    _HistoryFilter.thisMonth => 'Bulan ini',
+  };
+
+  Future<void> _showFilterSheet() async {
+    final selectedFilter = await showModalBottomSheet<_HistoryFilter>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Filter riwayat',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              const Text('Pilih periode transaksi yang ingin ditampilkan.'),
+              const SizedBox(height: 12),
+              ..._HistoryFilter.values.map(
+                (filter) => RadioListTile<_HistoryFilter>(
+                  value: filter,
+                  groupValue: _activeFilter,
+                  activeColor: const Color(0xFF00897B),
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(_filterLabel(filter)),
+                  onChanged: (value) => Navigator.pop(sheetContext, value),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (selectedFilter != null && mounted) {
+      setState(() => _activeFilter = selectedFilter);
+    }
+  }
+
+  String _filterLabel(_HistoryFilter filter) => switch (filter) {
+    _HistoryFilter.all => 'Semua transaksi',
+    _HistoryFilter.today => 'Hari ini',
+    _HistoryFilter.last7Days => '7 hari terakhir',
+    _HistoryFilter.thisMonth => 'Bulan ini',
+  };
 
   // --- LOGIKA MENGAMBIL DATA DARI SUPABASE ---
   Future<void> _fetchTransactions() async {
@@ -74,6 +173,9 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredTransactions = _filteredTransactions;
+    final hasActiveFilter = _activeFilter != _HistoryFilter.all;
+
     return Scaffold(
       backgroundColor: Colors.grey[50], // Background bersih
       appBar: AppBar(
@@ -103,11 +205,12 @@ class _HistoryPageState extends State<HistoryPage> {
               ],
             ),
             child: IconButton(
-              icon: const Icon(Icons.filter_list, color: Color(0xFF00838F)),
+              icon: Icon(
+                hasActiveFilter ? Icons.filter_alt : Icons.filter_list,
+                color: const Color(0xFF00838F),
+              ),
               tooltip: 'Filter Data',
-              onPressed: () {
-                _fetchTransactions(); // Sementara digunakan untuk tombol refresh
-              },
+              onPressed: _showFilterSheet,
             ),
           ),
         ],
@@ -133,8 +236,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 ],
               ),
               child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
-                  hintText: 'Cari nama transaksi...',
+                  hintText: 'Cari transaksi atau nominal...',
                   hintStyle: TextStyle(
                     color: Colors.grey.shade400,
                     fontSize: 14,
@@ -143,6 +249,16 @@ class _HistoryPageState extends State<HistoryPage> {
                     Icons.search,
                     color: Color(0xFF00ACC1),
                   ),
+                  suffixIcon: _searchQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Hapus pencarian',
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        ),
                   filled: true,
                   fillColor: Colors.transparent,
                   contentPadding: const EdgeInsets.symmetric(
@@ -157,6 +273,19 @@ class _HistoryPageState extends State<HistoryPage> {
               ),
             ),
           ),
+          if (hasActiveFilter)
+            Padding(
+              padding: const EdgeInsets.only(left: 24, right: 24, bottom: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  avatar: const Icon(Icons.filter_alt, size: 18),
+                  label: Text(_activeFilterLabel),
+                  onPressed: _showFilterSheet,
+                  onDeleted: () => setState(() => _activeFilter = _HistoryFilter.all),
+                ),
+              ),
+            ),
 
           // 2. Daftar Riwayat
           Expanded(
@@ -164,19 +293,23 @@ class _HistoryPageState extends State<HistoryPage> {
                 ? const Center(
                     child: CircularProgressIndicator(color: Color(0xFF00BCD4)),
                   )
-                : _transactions.isEmpty
+                : filteredTransactions.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.receipt_long,
+                          _transactions.isEmpty
+                              ? Icons.receipt_long
+                              : Icons.search_off_rounded,
                           size: 80,
                           color: Colors.grey.shade300,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Belum ada transaksi.',
+                          _transactions.isEmpty
+                              ? 'Belum ada transaksi.'
+                              : 'Tidak ada transaksi yang sesuai.',
                           style: TextStyle(
                             color: Colors.grey.shade500,
                             fontSize: 16,
@@ -193,9 +326,9 @@ class _HistoryPageState extends State<HistoryPage> {
                         parent: BouncingScrollPhysics(),
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      itemCount: _transactions.length,
+                      itemCount: filteredTransactions.length,
                       itemBuilder: (context, index) {
-                        final trx = _transactions[index];
+                        final trx = filteredTransactions[index];
                         final formattedAmount = formatRupiah(trx['amount']);
                         final formattedDate = formatDate(
                           trx['transaction_date'],
