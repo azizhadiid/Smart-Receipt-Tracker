@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:read_pdf_text/read_pdf_text.dart';
+import 'package:excel/excel.dart' hide Border;
 import '../../components/custom_alert.dart';
 
 class ScanPage extends StatefulWidget {
@@ -71,7 +74,150 @@ class _ScanPageState extends State<ScanPage> {
     }
   }
 
-  // --- LOGIKA UPLOAD KE SUPABASE & SIMPAN KE DATABASE (SEDERHANA) ---
+  // --- LOGIKA EKSTRAKSI TEKS & VALIDASI (OCR / READERS) ---
+  Future<String> _extractTextFromFile() async {
+    if (_selectedFile == null || _fileExtension == null) return '';
+    String extractedText = '';
+
+    try {
+      if (['jpg', 'jpeg', 'png'].contains(_fileExtension)) {
+        final inputImage = InputImage.fromFile(_selectedFile!);
+        final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+        try {
+          final recognizedText = await textRecognizer.processImage(inputImage);
+          extractedText = recognizedText.text;
+        } finally {
+          await textRecognizer.close();
+        }
+      } else if (_fileExtension == 'pdf') {
+        try {
+          extractedText = await ReadPdfText.getPDFtext(_selectedFile!.path);
+        } catch (_) {
+          extractedText = '';
+        }
+      } else if (['xls', 'xlsx'].contains(_fileExtension)) {
+        try {
+          final bytes = _selectedFile!.readAsBytesSync();
+          final excel = Excel.decodeBytes(bytes);
+          for (var table in excel.tables.keys) {
+            final sheet = excel.tables[table];
+            if (sheet != null) {
+              for (var row in sheet.rows) {
+                for (var cell in row) {
+                  if (cell != null && cell.value != null) {
+                    extractedText += '${cell.value} ';
+                  }
+                }
+                extractedText += '\n';
+              }
+            }
+          }
+        } catch (_) {
+          extractedText = '';
+        }
+      }
+    } catch (e) {
+      debugPrint('Error extracting text: $e');
+    }
+    return extractedText;
+  }
+
+  double _extractAmount(String text) {
+    final lines = text.split('\n');
+    double maxAmount = 0;
+    double keywordAmount = 0;
+    
+    // Kata kunci umum pada struk untuk menandai total belanja
+    final keywords = ['grand total', 'total', 'bayar', 'jumlah', 'tagihan', 'netto', 'amount', 'total bayar'];
+
+    for (var line in lines) {
+      final lowerLine = line.toLowerCase();
+      
+      // Deteksi angka nominal (misal: 45.000, 150,000, Rp 25.000, 50000)
+      final matches = RegExp(r'(?:[Rr][Pp]\.?\s*)?([0-9]+(?:[\.\,][0-9]{2,3})*(?:[\.\,][0-9]{1,2})?)').allMatches(line);
+      
+      for (var match in matches) {
+        String numStr = match.group(1) ?? '';
+        // Hapus akhir desimal .00 atau ,00
+        numStr = numStr.replaceAll(RegExp(r'[\.\,](00)$'), '');
+        // Hapus semua titik, koma, dan simbol selain angka murni
+        numStr = numStr.replaceAll(RegExp(r'[^0-9]'), '');
+        
+        if (numStr.isNotEmpty) {
+          final val = double.tryParse(numStr) ?? 0;
+          // Abaikan nominal terlalu kecil (< 100) atau tidak masuk akal (> 500 juta)
+          if (val >= 100 && val <= 500000000) {
+            if (val > maxAmount) maxAmount = val;
+            if (keywords.any((k) => lowerLine.contains(k))) {
+              if (val > keywordAmount) keywordAmount = val;
+            }
+          }
+        }
+      }
+    }
+
+    // Prioritaskan angka di dekat kata kunci total jika ada
+    return keywordAmount > 0 ? keywordAmount : maxAmount;
+  }
+
+  String _extractTitle(String text) {
+    final lines = text.split('\n');
+    for (var line in lines) {
+      final cleanLine = line.trim();
+      if (cleanLine.length < 3) continue;
+      // Abaikan jika hanya angka atau simbol
+      if (RegExp(r'^[0-9\W]+$').hasMatch(cleanLine)) continue;
+      
+      final lower = cleanLine.toLowerCase();
+      // Abaikan informasi umum di kop surat/struk
+      if (lower.startsWith('jl') || lower.startsWith('jln') || lower.startsWith('telp') || 
+          lower.startsWith('npwp') || lower.contains('kasir') || lower.contains('tanggal') ||
+          lower.startsWith('no.') || lower.contains('struk') || lower.startsWith('www.')) {
+        continue;
+      }
+      // Ambil baris teks pertama yang valid sebagai nama toko/judul transaksi
+      return cleanLine.length > 45 ? cleanLine.substring(0, 45) : cleanLine;
+    }
+    return 'Struk Belanja (${_fileExtension?.toUpperCase() ?? "DOC"})';
+  }
+
+  String _extractDate(String text) {
+    // Cari pola tanggal DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY atau YYYY-MM-DD
+    final dateRegex = RegExp(r'(\d{1,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,4})');
+    final match = dateRegex.firstMatch(text);
+    if (match != null) {
+      try {
+        int part1 = int.parse(match.group(1)!);
+        int part2 = int.parse(match.group(2)!);
+        int part3 = int.parse(match.group(3)!);
+        
+        int day = part1;
+        int month = part2;
+        int year = part3;
+
+        // Jika format YYYY-MM-DD
+        if (part1 > 1000) {
+          year = part1;
+          month = part2;
+          day = part3;
+        } else if (part3 < 100) {
+          year = 2000 + part3;
+        }
+
+        if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+          final date = DateTime(year, month, day);
+          return "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        }
+      } catch (_) {
+        // Fallback jika gagal parse
+      }
+    }
+    // Default menggunakan tanggal hari ini dalam format YYYY-MM-DD
+    final now = DateTime.now();
+    return "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+  }
+
+  // --- LOGIKA UPLOAD KE SUPABASE & SIMPAN KE DATABASE ---
   Future<void> _uploadToSupabase() async {
     if (_selectedFile == null) {
       showCustomAlert(
@@ -87,37 +233,70 @@ class _ScanPageState extends State<ScanPage> {
 
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('Sesi pengguna tidak valid.');
+      if (user == null) throw Exception('Sesi pengguna tidak valid. Silakan login terlebih dahulu.');
 
-      // 1. Membuat nama file yang unik
+      // 1. Ekstraksi teks dari file (OCR untuk gambar, ReadPdf untuk PDF, Excel decoder)
+      final extractedText = await _extractTextFromFile();
+      final numberRegex = RegExp(r'\d+');
+
+      // 2. VALIDASI TEKS / REJECT FILE: Jika bukan struk dan tidak ada angka
+      if (extractedText.trim().isEmpty || !numberRegex.hasMatch(extractedText)) {
+        if (mounted) {
+          showCustomAlert(
+            context: context,
+            title: 'File Ditolak',
+            message: 'Dokumen tidak valid! Tidak terdeteksi angka atau teks nominal pada file ini. Pastikan file yang dipilih adalah bukti struk yang dapat terbaca dengan jelas.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      // 3. Parse Data Struk (Amount, Title, Date)
+      final amount = _extractAmount(extractedText);
+      if (amount <= 0) {
+        if (mounted) {
+          showCustomAlert(
+            context: context,
+            title: 'File Ditolak',
+            message: 'Tidak ditemukan nominal angka belanja yang valid (Total/Tagihan) pada dokumen ini.',
+            isError: true,
+          );
+        }
+        return;
+      }
+
+      final title = _extractTitle(extractedText);
+      final transactionDate = _extractDate(extractedText);
+
+      // 4. Membuat nama file yang unik
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final uniqueFileName = '${user.id}_$timestamp.$_fileExtension';
 
-      // 2. Upload fisik file ke bucket 'receipts'
+      // 5. Upload fisik file ke bucket 'receipts' di Supabase Storage
       await Supabase.instance.client.storage
           .from('receipts')
           .upload(uniqueFileName, _selectedFile!);
 
-      // 3. Mengambil URL publik
+      // 6. Mengambil URL publik gambar/dokumen
       final publicUrl = Supabase.instance.client.storage
           .from('receipts')
           .getPublicUrl(uniqueFileName);
 
-      // 4. Simpan ke Database Tabel 'transactions' menggunakan data DUMMY sementara
+      // 7. Simpan hasil ekstraksi OCR ke Tabel 'transactions' di Database Supabase
       await Supabase.instance.client.from('transactions').insert({
         'user_id': user.id,
-        'title': 'Struk Baru ($_fileExtension)', // Judul sementara
-        'amount': 0, // Harga 0 sementara
-        'transaction_date': DateTime.now()
-            .toIso8601String(), // Tanggal hari ini
-        'receipt_image_url': publicUrl, // Link gambar dari storage
+        'title': title,
+        'amount': amount,
+        'transaction_date': transactionDate,
+        'receipt_image_url': publicUrl,
       });
 
       if (mounted) {
         showCustomAlert(
           context: context,
           title: 'Berhasil',
-          message: 'Gambar telah terscan dan tersimpan ke riwayat!',
+          message: 'Struk terverifikasi!\nToko: $title\nTotal: Rp ${amount.toStringAsFixed(0)}\nTanggal: $transactionDate',
           isError: false,
         );
 
@@ -133,7 +312,7 @@ class _ScanPageState extends State<ScanPage> {
         showCustomAlert(
           context: context,
           title: 'Gagal Mengunggah',
-          message: 'Pesan dari server: ${e.message}',
+          message: 'Pesan dari server storage: ${e.message}\nPastikan bucket "receipts" telah dibuat di Supabase.',
           isError: true,
         );
       }
@@ -368,7 +547,6 @@ class _ScanPageState extends State<ScanPage> {
                 ],
               ),
               child: ElevatedButton(
-                // Memanggil _uploadToSupabase secara langsung tanpa pop-up
                 onPressed: _isProcessing ? null : _uploadToSupabase,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
