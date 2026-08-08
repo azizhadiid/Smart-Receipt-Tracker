@@ -35,6 +35,9 @@ class _ScanPageState extends State<ScanPage> {
         _fileName = image.name;
         _fileExtension = image.name.split('.').last.toLowerCase();
       });
+      
+      // Langsung jalankan proses setelah foto diambil
+      await _uploadToSupabase();
     } catch (e) {
       if (mounted) {
         showCustomAlert(
@@ -61,6 +64,9 @@ class _ScanPageState extends State<ScanPage> {
           _fileName = result.files.single.name;
           _fileExtension = result.files.single.extension?.toLowerCase();
         });
+        
+        // Langsung jalankan proses setelah file dipilih
+        await _uploadToSupabase();
       }
     } catch (e) {
       if (mounted) {
@@ -248,6 +254,7 @@ class _ScanPageState extends State<ScanPage> {
             message: 'Dokumen tidak valid! Tidak terdeteksi angka atau teks nominal pada file ini. Pastikan file yang dipilih adalah bukti struk yang dapat terbaca dengan jelas.',
             isError: true,
           );
+          setState(() => _selectedFile = null);
         }
         return;
       }
@@ -262,6 +269,7 @@ class _ScanPageState extends State<ScanPage> {
             message: 'Tidak ditemukan nominal angka belanja yang valid (Total/Tagihan) pada dokumen ini.',
             isError: true,
           );
+          setState(() => _selectedFile = null);
         }
         return;
       }
@@ -315,6 +323,7 @@ class _ScanPageState extends State<ScanPage> {
           message: 'Pesan dari server storage: ${e.message}\nPastikan bucket "receipts" telah dibuat di Supabase.',
           isError: true,
         );
+        setState(() => _selectedFile = null);
       }
     } catch (e) {
       if (mounted) {
@@ -324,6 +333,7 @@ class _ScanPageState extends State<ScanPage> {
           message: e.toString(),
           isError: true,
         );
+        setState(() => _selectedFile = null);
       }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
@@ -530,52 +540,43 @@ class _ScanPageState extends State<ScanPage> {
                   ),
                 SizedBox(height: isShort ? 16 : 24),
 
-                Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF00BCD4), Color(0xFF00897B)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00BCD4).withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isProcessing ? null : _uploadToSupabase,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: _isProcessing
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
+                if (_isProcessing)
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.08),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
                         ),
-                      )
-                    : const Text(
-                        'Unggah Gambar',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 1,
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF00838F),
+                            strokeWidth: 3,
+                          ),
                         ),
-                      ),
-              ),
-            ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Mendeteksi dan Menyimpan...',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 const SizedBox(height: 20),
               ],
             ),
